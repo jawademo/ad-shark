@@ -1,131 +1,140 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { generateProduct } from '../services/productGenerator'
+import { create } from "zustand";
+import { gameApi } from "../services/api.js";
+import { v4 as uuidv4 } from "uuid";
 
-const STARTING_BALANCE = 10_000
-const OFFICE_UPGRADES = [
-  { id: 'desk', name: 'Better Desk', emoji: '🪑', price: 500, description: 'A real desk. Not a folding table.' },
-  { id: 'monitor', name: 'Ultrawide Monitor', emoji: '🖥️', price: 1200, description: '34" ultrawide. See more, miss nothing.' },
-  { id: 'chair', name: 'Ergonomic Chair', emoji: '💺', price: 800, description: 'Your back will thank you.' },
-  { id: 'coffee', name: 'Espresso Machine', emoji: '☕', price: 600, description: 'Fuel-grade coffee on demand.' },
-  { id: 'plant', name: 'Office Plant', emoji: '🌿', price: 150, description: 'Vibes. Pure vibes.' },
-  { id: 'lamp', name: 'LED Halo Lamp', emoji: '💡', price: 250, description: 'Look good on camera. Always.' },
-  { id: 'headphones', name: 'Noise-Cancel Headphones', emoji: '🎧', price: 350, description: 'Block the world. Focus up.' },
-  { id: 'keyboard', name: 'Mechanical Keyboard', emoji: '⌨️', price: 200, description: 'Satisfying clicks. Faster inputs.' },
-  { id: 'apartment', name: 'Apartment Upgrade', emoji: '🏠', price: 5000, description: 'Move out of the studio. Finally.' },
-  { id: 'car', name: 'New Car', emoji: '🚗', price: 15000, description: 'Flexing optional. Speed mandatory.' },
-  { id: 'penthouse', name: 'Penthouse Suite', emoji: '🏙️', price: 50000, description: 'You made it.' },
-]
+const useGameStore = create((set, get) => ({
+  // Session state
+  sessionId: null,
+  mode: "classic",
+  status: "idle", // idle | loading | playing | ended
+  error: null,
 
-const useGameStore = create(
-  persist(
-    (set, get) => ({
-      // ---- State ----
-      balance: STARTING_BALANCE,
-      totalEarned: 0,
-      totalLost: 0,
-      roundsPlayed: 0,
-      correctPredictions: 0,
-      currentProduct: null,
-      history: [],          // last 20 results
-      owned: [],            // purchased upgrade ids
-      phase: 'viewing',     // viewing | investing | result
-      lastResult: null,     // { won, amount, multiplier, product }
-      generatorStrategy: 'random', // 'random' | 'llm'
+  // Financial state
+  balance: 10000,
+  startingBalance: 10000,
 
-      // ---- Actions ----
-      nextProduct: () => {
-        const strategy = get().generatorStrategy
-        set({
-          currentProduct: generateProduct(strategy),
-          phase: 'viewing',
-          lastResult: null,
-        })
-      },
+  // Products
+  products: [],
+  currentProductIndex: 0,
+  currentProduct: null,
 
-      invest: (amount) => {
-        const { currentProduct, balance } = get()
-        if (!currentProduct || amount <= 0 || amount > balance) return
+  // Round history
+  rounds: [],
+  currentRound: null,
 
-        const won = Math.random() < currentProduct.successProb
-        const profit = won
-          ? Math.floor(amount * currentProduct.returnMultiplier)
-          : 0
-        const newBalance = won ? balance - amount + profit : balance - amount
-        const gained = won ? profit - amount : -amount
+  // Session results
+  sessionResult: null,
 
-        const result = {
-          won,
-          amount,
-          profit,
-          gained,
-          multiplier: currentProduct.returnMultiplier,
-          product: currentProduct,
-          timestamp: Date.now(),
-        }
+  // ── Actions ──────────────────────────────────────────────────────
 
-        set((s) => ({
-          balance: newBalance,
-          totalEarned: won ? s.totalEarned + profit : s.totalEarned,
-          totalLost: won ? s.totalLost : s.totalLost + amount,
-          roundsPlayed: s.roundsPlayed + 1,
-          correctPredictions: won ? s.correctPredictions + 1 : s.correctPredictions,
-          phase: 'result',
-          lastResult: result,
-          history: [result, ...s.history].slice(0, 20),
-        }))
-      },
+  startSession: async (mode = "classic") => {
+    set({ status: "loading", error: null });
 
-      pass: () => {
-        set((s) => ({
-          roundsPlayed: s.roundsPlayed + 1,
-          phase: 'result',
-          lastResult: { won: null, passed: true, product: s.currentProduct },
-        }))
-      },
-
-      buyUpgrade: (upgradeId) => {
-        const { balance, owned } = get()
-        const upgrade = OFFICE_UPGRADES.find(u => u.id === upgradeId)
-        if (!upgrade || owned.includes(upgradeId) || balance < upgrade.price) return
-        set((s) => ({
-          balance: s.balance - upgrade.price,
-          owned: [...s.owned, upgradeId],
-        }))
-      },
-
-      setPhase: (phase) => set({ phase }),
-
-      resetGame: () => set({
-        balance: STARTING_BALANCE,
-        totalEarned: 0,
-        totalLost: 0,
-        roundsPlayed: 0,
-        correctPredictions: 0,
-        currentProduct: null,
-        history: [],
-        owned: [],
-        phase: 'viewing',
-        lastResult: null,
-      }),
-
-      setStrategy: (strategy) => set({ generatorStrategy: strategy }),
-    }),
-    {
-      name: 'ad-shark-save',
-      partialize: (s) => ({
-        balance: s.balance,
-        totalEarned: s.totalEarned,
-        totalLost: s.totalLost,
-        roundsPlayed: s.roundsPlayed,
-        correctPredictions: s.correctPredictions,
-        history: s.history,
-        owned: s.owned,
-        generatorStrategy: s.generatorStrategy,
-      }),
+    try {
+      const session = await gameApi.createSession(mode);
+      set({
+        sessionId: session.id,
+        mode: session.mode,
+        balance: session.starting_balance,
+        startingBalance: session.starting_balance,
+        products: session.products,
+        currentProductIndex: 0,
+        currentProduct: session.products[0] || null,
+        rounds: [],
+        currentRound: null,
+        sessionResult: null,
+        status: "playing",
+      });
+    } catch (err) {
+      set({
+        status: "idle",
+        error: err.message || "Failed to start session",
+      });
+      throw err;
     }
-  )
-)
+  },
 
-export { OFFICE_UPGRADES }
-export default useGameStore
+  makeDecision: async (decision, investmentAmount = 0) => {
+    const { sessionId, currentProduct, balance } = get();
+    if (!sessionId || !currentProduct) return;
+
+    set({ status: "loading" });
+
+    const nonce = uuidv4();
+
+    try {
+      const result = await gameApi.playRound(sessionId, {
+        product_id: currentProduct.id,
+        decision,
+        investment_amount: decision === "pass" ? 0 : investmentAmount,
+        nonce,
+      });
+
+      const roundData = {
+        ...result,
+        product: currentProduct,
+      };
+
+      const newRounds = [...get().rounds, roundData];
+      const nextIndex = get().currentProductIndex + 1;
+      const nextProduct = get().products[nextIndex] || null;
+
+      set({
+        rounds: newRounds,
+        currentRound: roundData,
+        balance: result.new_balance,
+        currentProductIndex: nextIndex,
+        currentProduct: nextProduct,
+        status: nextProduct ? "playing" : "ended",
+      });
+
+      // Auto-end session if no more products
+      if (!nextProduct) {
+        await get().endSession();
+      }
+    } catch (err) {
+      set({
+        status: "playing",
+        error: err.message || "Failed to process round",
+      });
+      throw err;
+    }
+  },
+
+  endSession: async () => {
+    const { sessionId } = get();
+    if (!sessionId) return;
+
+    try {
+      const result = await gameApi.endSession(sessionId);
+      set({
+        sessionResult: result,
+        status: "ended",
+      });
+      return result;
+    } catch (err) {
+      set({ error: err.message || "Failed to end session" });
+      throw err;
+    }
+  },
+
+  resetGame: () => {
+    set({
+      sessionId: null,
+      status: "idle",
+      error: null,
+      balance: 10000,
+      startingBalance: 10000,
+      products: [],
+      currentProductIndex: 0,
+      currentProduct: null,
+      rounds: [],
+      currentRound: null,
+      sessionResult: null,
+    });
+  },
+
+  clearError: () => set({ error: null }),
+}));
+
+export default useGameStore;

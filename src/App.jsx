@@ -1,116 +1,131 @@
-import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import useGameStore from './store/gameStore'
-import ProductCard from './components/ProductCard'
-import InvestScreen from './components/InvestScreen'
-import ResultScreen from './components/ResultScreen'
-import ShopScreen from './components/ShopScreen'
-import StatsScreen from './components/StatsScreen'
+import { useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import useAuthStore from "./store/authStore.js";
+import InvestScreen from "./screens/InvestScreen.jsx";
+import StatsScreen from "./screens/StatsScreen.jsx";
+import ShopScreen from "./screens/ShopScreen.jsx";
+import LoginScreen from "./screens/LoginScreen.jsx";
+import RegisterScreen from "./screens/RegisterScreen.jsx";
+import LandingScreen from "./screens/LandingScreen.jsx";
+import DailyChallengeScreen from "./screens/DailyChallengeScreen.jsx";
+import LeaderboardScreen from "./screens/LeaderboardScreen.jsx";
+import ChallengeScreen from "./screens/ChallengeScreen.jsx";
+import AppLayout from "./components/AppLayout.jsx";
+import "./App.css";
 
-const TABS = [
-  { id: 'play', label: 'Play', emoji: '🎮' },
-  { id: 'shop', label: 'Shop', emoji: '🏠' },
-  { id: 'stats', label: 'Stats', emoji: '📊' },
-]
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <div className="animate-pulse text-white text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function PublicRoute({ children }) {
+  const { isAuthenticated, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <div className="animate-pulse text-white text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/play" replace />;
+  }
+
+  return children;
+}
+
+function FriendChallengeRedirect() {
+  const { code } = useParams();
+  useEffect(() => {
+    window.location.href = `https://adshark.io/challenge/${code}`;
+  }, [code]);
+  return null;
+}
 
 export default function App() {
-  const { currentProduct, phase, nextProduct, balance, owned } = useGameStore()
-  const [tab, setTab] = useState('play')
+  const init = useAuthStore((s) => s.init);
 
-  // Boot: load first product
   useEffect(() => {
-    if (!currentProduct) nextProduct()
-  }, [])
-
-  const formatMoney = (n) => `$${n.toLocaleString()}`
+    init();
+  }, [init]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0f' }}>
-      {/* Header */}
-      <div className="sticky top-0 z-10 px-4 pt-4 pb-3 border-b border-white/5"
-        style={{ background: '#0a0a0f' }}>
-        <div className="flex items-center justify-between max-w-lg mx-auto">
-          <div>
-            <h1 className="text-xl font-black text-white tracking-tight">
-              🦈 Ad Shark
-            </h1>
-            <p className="text-white/30 text-xs">Spot the winners. Skip the flops.</p>
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-black text-amber-400">{formatMoney(balance)}</div>
-            <div className="text-white/30 text-xs">{owned.length} items owned</div>
-          </div>
-        </div>
-      </div>
+    <BrowserRouter>
+      <Routes>
+        {/* Landing page */}
+        <Route path="/" element={<LandingScreen />} />
 
-      {/* Content */}
-      <div className="flex-1 px-4 py-4 max-w-lg mx-auto w-full">
-        <AnimatePresence mode="wait">
-          {tab === 'play' && (
-            <motion.div
-              key="play"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              {phase === 'viewing' && currentProduct && (
-                <motion.div className="space-y-4">
-                  <ProductCard product={currentProduct} />
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => useGameStore.getState().pass()}
-                      className="flex-1 py-3.5 rounded-2xl font-bold text-white/60 border border-white/10 hover:bg-white/5 transition-all"
-                    >
-                      PASS 🙅
-                    </button>
-                    <button
-                      onClick={() => useGameStore.getState().setPhase('investing')}
-                      className="flex-[2] py-3.5 rounded-2xl font-black text-black text-lg transition-all active:scale-95"
-                      style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)' }}
-                    >
-                      INVEST 💰
-                    </button>
-                  </div>
-                </motion.div>
-              )}
+        {/* Auth */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginScreen />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <RegisterScreen />
+            </PublicRoute>
+          }
+        />
 
-              {phase === 'investing' && <InvestScreen />}
-              {phase === 'result' && <ResultScreen />}
-            </motion.div>
-          )}
+        {/* Game — wrapped in AppLayout with bottom nav */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/play" element={<InvestScreen />} />
+          <Route path="/stats" element={<StatsScreen />} />
+          <Route path="/shop" element={<ShopScreen />} />
+          <Route path="/daily" element={<DailyChallengeScreen />} />
+        </Route>
+        <Route
+          path="/leaderboard"
+          element={<LeaderboardScreen />}
+        />
+        <Route
+          path="/challenge/:code"
+          element={<ChallengeScreen />}
+        />
 
-          {tab === 'shop' && (
-            <motion.div key="shop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ShopScreen />
-            </motion.div>
-          )}
+        {/* Redirect legacy URL params */}
+        <Route
+          path="/challenge-redirect/:code"
+          element={<FriendChallengeRedirect />}
+        />
 
-          {tab === 'stats' && (
-            <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <StatsScreen />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Bottom Nav */}
-      <div className="sticky bottom-0 border-t border-white/10 px-4 pb-safe"
-        style={{ background: '#0a0a0f' }}>
-        <div className="flex max-w-lg mx-auto">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex-1 py-3 flex flex-col items-center gap-0.5 transition-all ${
-                tab === t.id ? 'text-amber-400' : 'text-white/30 hover:text-white/60'
-              }`}
-            >
-              <span className="text-xl">{t.emoji}</span>
-              <span className="text-xs font-semibold">{t.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }

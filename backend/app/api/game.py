@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone, date
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -34,7 +34,7 @@ async def get_active_products(db: AsyncSession, count: int = 10) -> list[Product
     result = await db.execute(
         select(Product)
         .where(Product.is_active == True)  # noqa: E712
-        .order_by(Product.id)  # placeholder; use RANDOM() in real impl
+        .order_by(func.random())
         .limit(count)
     )
     return list(result.scalars().all())

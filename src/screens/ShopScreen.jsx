@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag, Loader2, Zap, Coins } from "lucide-react";
-import { shopApi } from "../services/api.js";
+import { shopApi } from "../services/api.ts";
 
 export default function ShopScreen() {
   const [boosters, setBoosters] = useState([]);

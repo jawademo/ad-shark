@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Loader2 } from "lucide-react";
-import { leaderboardApi } from "../services/api.js";
+import { leaderboardApi } from "../services/api.ts";
 
 export default function LeaderboardScreen() {
   const [entries, setEntries] = useState([]);
@@ -72,7 +72,7 @@ export default function LeaderboardScreen() {
         <div className="space-y-2">
           {entries.map((entry, i) => (
             <motion.div
-              key={entry.user_id}
+              key={entry.user_id ?? entry.username ?? i}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}

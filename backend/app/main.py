@@ -16,11 +16,15 @@ from app.api import auth, game, challenges, leaderboard, social, profile, shop, 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup / shutdown lifecycle."""
-    # Startup: verify DB connection
     async with engine.begin() as conn:
-        pass  # Connection check — will raise if unreachable
+        if settings.DEBUG:
+            await conn.run_sync(Base.metadata.create_all)
+
+    if settings.DEBUG:
+        from app.seed import seed
+        await seed()
+
     yield
-    # Shutdown: dispose engine
     await engine.dispose()
 
 

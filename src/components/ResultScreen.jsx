@@ -3,7 +3,7 @@ import useGameStore from '../store/gameStore'
 import ProductCard from './ProductCard'
 
 export default function ResultScreen() {
-  const { lastResult, nextProduct, balance } = useGameStore()
+  const { lastResult, advanceToNext, balance } = useGameStore()
 
   if (!lastResult) return null
 
@@ -101,7 +101,7 @@ export default function ResultScreen() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        onClick={nextProduct}
+        onClick={advanceToNext}
         className="w-full py-4 rounded-2xl font-black text-black text-lg transition-all active:scale-95"
         style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)' }}
       >

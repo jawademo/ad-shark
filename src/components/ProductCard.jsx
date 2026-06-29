@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 
 export default function ProductCard({ product }) {
   if (!product) {
@@ -85,7 +85,8 @@ export default function ProductCard({ product }) {
       {/* Footer */}
       <div className="flex items-center justify-between pt-1">
         <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-white/10 text-white/60">
-          {product.category}
+          {product.categoryEmoji ? `${product.categoryEmoji} ` : ""}
+          {product.categoryLabel || product.category}
         </span>
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-white/40">Difficulty:</span>

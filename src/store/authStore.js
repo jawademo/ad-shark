@@ -4,7 +4,7 @@ import {
   setTokens,
   clearTokens,
   getAccessToken,
-} from "../services/api.js";
+} from "../services/api.ts";
 
 const useAuthStore = create((set, get) => ({
   user: null,

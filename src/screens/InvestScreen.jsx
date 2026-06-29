@@ -3,25 +3,32 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   TrendingUp, AlertCircle, Loader2,
-  Trophy, Percent, DollarSign, Play
+  Trophy, Percent, DollarSign, Play, Share2, Link2, Check, MessageCircle, Building2
 } from "lucide-react";
 import ProductCard from "../components/ProductCard";
+import ResultScreen from "../components/ResultScreen";
 import useGameStore from "../store/gameStore";
 import useAuthStore from "../store/authStore";
+import useOfficeStore from "../store/officeStore.js";
+import { encodeChallenge } from "../services/api.ts";
 
 const QUICK_PERCENTS = [10, 25, 50, 100];
 
 export default function InvestScreen() {
   const {
     status, error, balance, currentProduct, sessionResult,
+    products, rounds,
     startSession, makeDecision, resetGame, clearError,
   } = useGameStore();
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
+  const { addEarnings, totalEarnings, getTier } = useOfficeStore();
+  const [officeEarned, setOfficeEarned] = useState(0);
 
   const [amount, setAmount] = useState(0);
   const [roundInProgress, setRoundInProgress] = useState(false);
   const [lastError, setLastError] = useState(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Start session on mount if idle
   useEffect(() => {
@@ -31,6 +38,20 @@ export default function InvestScreen() {
       });
     }
   }, [status, startSession]);
+
+  // Track office earnings when session ends
+  useEffect(() => {
+    if (status === "ended" && sessionResult && officeEarned === 0) {
+      const profit = Math.max(0, (sessionResult.final_balance || 10000) - 10000);
+      if (profit > 0) {
+        const newTotal = addEarnings(profit);
+        setOfficeEarned(profit);
+      }
+    }
+    if (status === "playing") {
+      setOfficeEarned(0);
+    }
+  }, [status, sessionResult]);
 
   // Reset investment amount when product changes
   useEffect(() => {
@@ -75,6 +96,12 @@ export default function InvestScreen() {
     });
   };
 
+  // ── Reveal step between products ──────────────────────────────────
+
+  if (status === "revealing") {
+    return <ResultScreen />;
+  }
+
   // ── Loading state ──────────────────────────────────────────────────
 
   if (status === "loading" && !currentProduct) {
@@ -111,6 +138,16 @@ export default function InvestScreen() {
 
   if (status === "ended" && sessionResult) {
     const sr = sessionResult;
+    const playerName = user?.display_name || user?.username || "Anonymous Shark";
+    const challengeCode = encodeChallenge(
+      products,
+      rounds.map(r => ({ product_id: r.product_id, decision: r.decision, investment_amount: r.investment_amount })),
+      sr.final_balance,
+      playerName
+    );
+    const challengeUrl = `${window.location.origin}/challenge/${challengeCode}`;
+    const shareText = `I turned $10k into ${formatMoney(sr.final_balance)} on ad-shark 🦈 Think you can do better? Beat my score:`;
+
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -120,7 +157,7 @@ export default function InvestScreen() {
         <div className="text-center">
           <Trophy className="w-12 h-12 text-amber-400 mx-auto mb-2" />
           <h2 className="text-2xl font-black text-white">Session Complete!</h2>
-          <p className="text-gray-400">Great instincts, {user?.display_name || user?.username}.</p>
+          <p className="text-gray-400">Great instincts, {playerName}.</p>
         </div>
 
         {/* Score card */}
@@ -130,46 +167,75 @@ export default function InvestScreen() {
             <span className="text-white font-bold">{formatMoney(sr.final_balance)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Session Score</span>
-            <span className="text-amber-400 font-bold">{sr.session_score?.toLocaleString()}</span>
+            <span className="text-gray-400">Profit / Loss</span>
+            <span className={`font-bold ${sr.final_balance >= 10000 ? 'text-green-400' : 'text-red-400'}`}>
+              {sr.final_balance >= 10000 ? '+' : ''}{formatMoney(sr.final_balance - 10000)}
+            </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Accuracy</span>
-            <span className="text-white font-bold">{Math.round(sr.accuracy * 100)}%</span>
+            <span className="text-gray-400">Rounds Played</span>
+            <span className="text-white font-bold">{sr.rounds_played || 5}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Correct / Total</span>
-            <span className="text-white font-bold">{sr.correct_rounds} / {sr.total_rounds}</span>
-          </div>
-          <div className="border-t border-white/10 pt-3 flex justify-between">
-            <span className="text-gray-400">XP Earned</span>
-            <span className="text-blue-400 font-bold">+{sr.xp_earned} XP</span>
-          </div>
-          {sr.shark_coins_earned > 0 && (
-            <div className="flex justify-between">
-              <span className="text-gray-400">Shark Coins</span>
-              <span className="text-cyan-400 font-bold">+{sr.shark_coins_earned}</span>
-            </div>
-          )}
-          {sr.persona_update && (
-            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 text-center mt-2">
-              <span className="text-purple-300 text-sm">Persona: <strong>{sr.persona_update}</strong></span>
-            </div>
-          )}
         </div>
 
-        {/* Achievements */}
-        {sr.achievements_unlocked?.length > 0 && (
-          <div className="rounded-2xl border border-amber-500/20 p-4 space-y-2" style={{ background: '#1a1a0a' }}>
-            <h3 className="text-amber-400 font-bold text-sm">Achievements Unlocked</h3>
-            {sr.achievements_unlocked.map((a) => (
-              <div key={a.code} className="flex items-center gap-2 text-sm">
-                <Trophy className="w-4 h-4 text-amber-400" />
-                <span className="text-white font-medium">{a.name}</span>
-                <span className="text-gray-500">— {a.description}</span>
-              </div>
-            ))}
+        {/* Challenge a Friend */}
+        <div className="rounded-2xl border border-amber-500/20 p-4 space-y-3" style={{ background: '#1a1a0a' }}>
+          <h3 className="text-amber-400 font-bold text-sm flex items-center gap-2">
+            <Share2 className="w-4 h-4" /> Challenge a Friend
+          </h3>
+          <p className="text-gray-400 text-xs">Send them the same products. See who's the better shark.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(challengeUrl);
+                setCopiedLink(true);
+                setTimeout(() => setCopiedLink(false), 2000);
+              }}
+              className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-lg text-sm flex items-center justify-center gap-2"
+            >
+              {copiedLink ? <><Check className="w-4 h-4" /> Copied!</> : <><Link2 className="w-4 h-4" /> Copy Link</>}
+            </button>
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(challengeUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-2.5 bg-white/10 hover:bg-white/15 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4" /> Share on X
+            </a>
           </div>
+        </div>
+
+        {/* Office Progress */}
+        {officeEarned > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-indigo-500/20 p-4 space-y-2"
+            style={{ background: '#0a0a1f' }}
+          >
+            <h3 className="text-indigo-400 font-bold text-sm flex items-center gap-2">
+              <Building2 className="w-4 h-4" /> Office Earnings
+            </h3>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Profit added to office</span>
+              <span className="text-emerald-400 font-bold">+{formatMoney(officeEarned)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Total office balance</span>
+              <span className="text-indigo-400 font-bold">{formatMoney(totalEarnings)}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-2xl">{getTier()?.emoji}</span>
+              <span className="text-white text-xs">{getTier()?.name}</span>
+            </div>
+            <button
+              onClick={() => navigate("/office")}
+              className="w-full py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold rounded-lg text-sm mt-1"
+            >
+              View Office →
+            </button>
+          </motion.div>
         )}
 
         {/* Actions */}
@@ -182,10 +248,10 @@ export default function InvestScreen() {
             Play Again
           </button>
           <button
-            onClick={() => navigate("/stats")}
+            onClick={() => navigate("/leaderboard")}
             className="flex-1 py-3.5 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl"
           >
-            View Stats
+            Leaderboard
           </button>
         </div>
       </motion.div>

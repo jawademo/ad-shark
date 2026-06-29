@@ -1,18 +1,20 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Loader2, AlertCircle } from "lucide-react";
-import { profileApi } from "../services/api.js";
+import { useLocation } from "react-router-dom";
+import { profileApi } from "../services/api.ts";
 import useAuthStore from "../store/authStore.js";
 
 export default function StatsScreen() {
   const user = useAuthStore((s) => s.user);
+  const location = useLocation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [location]);
 
   const loadStats = async () => {
     setLoading(true);

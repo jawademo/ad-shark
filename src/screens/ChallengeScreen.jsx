@@ -1,47 +1,45 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Swords, Loader2, Play } from "lucide-react";
-import { challengeApi } from "../services/api.js";
-import useAuthStore from "../store/authStore.js";
+import { Swords, Loader2, Play, ArrowRight } from "lucide-react";
+import { decodeChallenge } from "../services/api.ts";
 
 export default function ChallengeScreen() {
   const { code } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
 
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadPreview();
+    // Decode challenge from URL — no backend needed
+    setLoading(true);
+    const decoded = decodeChallenge(code);
+    if (decoded && decoded.p && decoded.p.length > 0) {
+      setPreview({
+        challenger_name: decoded.n || "Anonymous Shark",
+        challenger_score: decoded.s || 0,
+        products: decoded.p,
+        decisions: decoded.d || [],
+        product_count: decoded.p.length,
+        mode: "classic",
+        starting_balance: 10000,
+      });
+    } else {
+      setError("Invalid or expired challenge link");
+    }
+    setLoading(false);
   }, [code]);
 
-  const loadPreview = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await challengeApi.previewFriendChallenge(code);
-      setPreview(data);
-    } catch (err) {
-      setError(err.message || "Challenge not found or expired");
-    } finally {
-      setLoading(false);
+  const handleAccept = () => {
+    // Store the challenge products in sessionStorage and navigate to play
+    if (preview) {
+      sessionStorage.setItem("challenge_products", JSON.stringify(preview.products));
+      sessionStorage.setItem("challenge_challenger_name", preview.challenger_name);
+      sessionStorage.setItem("challenge_challenger_score", String(preview.challenger_score));
     }
-  };
-
-  const handleAccept = async () => {
-    if (!isAuthenticated) {
-      navigate(`/login?redirect=/challenge/${code}`);
-      return;
-    }
-    try {
-      await challengeApi.acceptFriendChallenge(code);
-      navigate("/play");
-    } catch (err) {
-      setError(err.message || "Failed to accept challenge");
-    }
+    navigate("/play?mode=challenge");
   };
 
   if (loading) {
@@ -60,13 +58,17 @@ export default function ChallengeScreen() {
         <p className="text-gray-400 text-center">{error || "This challenge link may have expired."}</p>
         <button
           onClick={() => navigate("/")}
-          className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold"
+          className="px-6 py-3 bg-amber-500 text-black rounded-xl font-semibold"
         >
           Go Home
         </button>
       </div>
     );
   }
+
+  const challengerScore = preview.challenger_score || 0;
+  const profit = challengerScore - 10000;
+  const formatMoney = (n) => `$${(n || 0).toLocaleString()}`;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gray-950">
@@ -98,14 +100,37 @@ export default function ChallengeScreen() {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Starting Balance</span>
-            <span className="text-amber-400 font-medium">${preview.starting_balance?.toLocaleString()}</span>
+            <span className="text-amber-400 font-medium">{formatMoney(preview.starting_balance)}</span>
           </div>
-          {preview.challenger_score != null && (
-            <div className="flex justify-between text-sm border-t border-white/5 pt-2">
-              <span className="text-gray-400">Their Score</span>
-              <span className="text-amber-400 font-bold">${preview.challenger_score?.toLocaleString()}</span>
-            </div>
-          )}
+          <div className="flex justify-between text-sm border-t border-white/5 pt-2">
+            <span className="text-gray-400">Their Final Balance</span>
+            <span className="text-amber-400 font-bold">{formatMoney(challengerScore)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">Their Profit/Loss</span>
+            <span className={`font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {profit >= 0 ? '+' : ''}{formatMoney(profit)}
+            </span>
+          </div>
+        </div>
+
+        {/* Preview of products they'll see */}
+        <div className="text-left">
+          <p className="text-gray-500 text-xs uppercase tracking-wide mb-2">You'll evaluate:</p>
+          <div className="space-y-1.5">
+            {preview.products.slice(0, 3).map((p, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm bg-white/5 rounded-lg px-3 py-2">
+                <span className="text-lg">{p.categoryEmoji || '📦'}</span>
+                <span className="text-white font-medium">{p.name}</span>
+                <span className="text-gray-500 text-xs ml-auto truncate">{p.tagline}</span>
+              </div>
+            ))}
+            {preview.products.length > 3 && (
+              <p className="text-gray-600 text-xs text-center pt-1">
+                + {preview.products.length - 3} more...
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Accept button */}
@@ -118,7 +143,7 @@ export default function ChallengeScreen() {
         </button>
 
         <p className="text-gray-600 text-xs">
-          No account needed to view. Sign up to play.
+          No account needed · Play in your browser · 2 minutes
         </p>
       </motion.div>
     </div>

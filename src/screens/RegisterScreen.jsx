@@ -77,7 +77,7 @@ export default function RegisterScreen() {
               required
               minLength={3}
               maxLength={30}
-              pattern="^[a-zA-Z0-9_-]+$"
+              pattern="^[a-zA-Z0-9_\-]+$"
               autoComplete="username"
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="coolshark42"

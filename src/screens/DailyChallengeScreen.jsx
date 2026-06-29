@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Trophy, CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { challengeApi } from "../services/api.js";
+import { challengeApi } from "../services/api.ts";
 
 export default function DailyChallengeScreen() {
   const [challenge, setChallenge] = useState(null);
@@ -140,7 +140,7 @@ export default function DailyChallengeScreen() {
                   <p className="text-amber-400 text-xs">{product.tagline}</p>
                 </div>
               </div>
-              <p className="text-gray-300 text-sm">{product.description}</p>
+              <p className="text-gray-300 text-sm">{product.tagline || product.description}</p>
 
               {/* Decision buttons */}
               <div className="flex gap-2 pt-1">

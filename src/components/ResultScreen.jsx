@@ -7,8 +7,15 @@ export default function ResultScreen() {
 
   if (!lastResult) return null
 
-  const { won, passed, amount, profit, gained, product } = lastResult
+  const {
+    won, passed, amount, profit, gained, product,
+    outcomeLabel, successProb, betFraction, decisiveSignal, decisiveType, reason,
+  } = lastResult
   const isPass = passed === true
+
+  const oddsPct = successProb != null ? Math.round(successProb * 100) : null
+  const betPct = betFraction != null ? Math.round(betFraction * 100) : null
+  const oddsColor = oddsPct >= 60 ? '#10b981' : oddsPct >= 35 ? '#f59e0b' : '#ef4444'
 
   const formatMoney = (n) => {
     const abs = Math.abs(n)
@@ -56,7 +63,7 @@ export default function ResultScreen() {
         ) : won ? (
           <>
             <h2 className="text-2xl font-black text-emerald-400">WINNER!</h2>
-            <p className="text-white/70 mt-1">{product?.name} was a hit 🎉</p>
+            <p className="text-white/80 mt-1.5 text-sm leading-snug">{outcomeLabel}</p>
             <div className="text-3xl font-black text-emerald-300 mt-3">
               {formatMoney(gained)}
             </div>
@@ -67,7 +74,7 @@ export default function ResultScreen() {
         ) : (
           <>
             <h2 className="text-2xl font-black text-red-400">FLOPPED</h2>
-            <p className="text-white/70 mt-1">{product?.name} crashed and burned 💸</p>
+            <p className="text-white/80 mt-1.5 text-sm leading-snug">{outcomeLabel}</p>
             <div className="text-3xl font-black text-red-300 mt-3">
               {formatMoney(-amount)}
             </div>
@@ -83,6 +90,58 @@ export default function ResultScreen() {
           <span className="font-bold text-amber-400">${balance?.toLocaleString()}</span>
         </div>
       </motion.div>
+
+      {/* The verdict — why it happened */}
+      {(reason || decisiveSignal || oddsPct != null) && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="rounded-2xl border border-white/10 p-4 space-y-3"
+          style={{ background: '#12121f' }}
+        >
+          <p className="text-white/30 text-xs uppercase tracking-wider">
+            {isPass ? 'What you dodged' : 'The verdict'}
+          </p>
+
+          {reason && (
+            <p className="text-white/80 text-sm leading-snug">{reason}</p>
+          )}
+
+          {decisiveSignal && (
+            <div
+              className={`flex items-start gap-2 rounded-lg p-2.5 text-sm ${
+                decisiveType === 'green'
+                  ? 'bg-emerald-500/10 text-emerald-300'
+                  : 'bg-red-500/10 text-red-300'
+              }`}
+            >
+              <span>{decisiveType === 'green' ? '✅' : '🚩'}</span>
+              <span className="leading-snug">{decisiveSignal}</span>
+            </div>
+          )}
+
+          {oddsPct != null && (
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/50">Real odds of success</span>
+                <span className="font-bold" style={{ color: oddsColor }}>
+                  {oddsPct}%{!isPass && betPct ? ` · you bet ${betPct}%` : ''}
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${oddsPct}%` }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                  className="h-full rounded-full"
+                  style={{ background: oddsColor }}
+                />
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Product recap */}
       {product && (

@@ -2,6 +2,8 @@
 // Falls back to mock data for everything.
 // When VITE_API_URL is set, it will try the real backend first.
 
+import { getStatsSnapshot } from "../store/statsStore.js";
+
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
 // ── Product generation (local, no server) ──────────────────
@@ -92,6 +94,10 @@ const ABSURD_PRODUCTS = [
     rarity: "legendary", difficulty: 3,
     market_signals: ["went viral on TikTok with 2M+ views", "founders are former Juicero engineers (unironically)", "Kevin Hart invested (he doesn't know what it does either)"],
     hypeScore: 7, successProb: 0.65, returnMultiplier: 3.5,
+    verdict: {
+      win: "People will pay $400 to squeeze a packet if it's on-chain. Peak 2020s — and you called it.",
+      loss: "Same lesson as Juicero 1.0: nobody needs a WiFi juicer. The NFTs didn't save it.",
+    },
   },
   {
     id: "meme-2",
@@ -102,6 +108,10 @@ const ABSURD_PRODUCTS = [
     rarity: "rare", difficulty: 2,
     market_signals: ["1M signups in the first week", "founder is a former Tinder PM with 3 exits", "literally no monetization beyond $9/mo"],
     hypeScore: 8, successProb: 0.70, returnMultiplier: 2.8,
+    verdict: {
+      win: "A million people hate texting back. $9/mo to never reply again — easiest yes in tech.",
+      loss: "Charming demo, no business model past $9/mo. The novelty wore off and so did the users.",
+    },
   },
   {
     id: "meme-3",
@@ -132,6 +142,10 @@ const ABSURD_PRODUCTS = [
     rarity: "uncommon", difficulty: 4,
     market_signals: ["pivoted from a failed NFT marketplace", "actually profitable — $0.99 minting fee adds up", "nobody can explain what cloud bread is"],
     hypeScore: 3, successProb: 0.15, returnMultiplier: 1.5,
+    verdict: {
+      win: "That $0.99 minting fee quietly printed money. Dumb idea, real margins — nice catch.",
+      loss: "It's bread you can't eat, on a chain nobody uses. The floor price found zero.",
+    },
   },
   {
     id: "meme-6",
@@ -162,6 +176,10 @@ const ABSURD_PRODUCTS = [
     rarity: "common", difficulty: 1,
     market_signals: ["Gen Z adoption is insane — 200k DAU in month one", "premium tier ($19.99) is 40% of revenue", "founder is 19 and dropped out of high school"],
     hypeScore: 8, successProb: 0.75, returnMultiplier: 3.2,
+    verdict: {
+      win: "200k daily Gen Z users and a $19.99 vanity tier. The Magic 8-Ball is a goldmine.",
+      loss: "Under the hood it's a selfie-rating Magic 8-Ball. Gen Z got bored and touched grass.",
+    },
   },
   {
     id: "meme-9",
@@ -182,6 +200,10 @@ const ABSURD_PRODUCTS = [
     rarity: "legendary", difficulty: 2,
     market_signals: ["3M downloads in first month", "the token has no real value but users don't care", "average session length: 3.7 hours"],
     hypeScore: 9, successProb: 0.80, returnMultiplier: 4.0,
+    verdict: {
+      win: "3.7-hour sessions and a worthless token nobody cashes out. Engagement IS the product.",
+      loss: "Regulators noticed you were paying people fake money to doomscroll. That ended fast.",
+    },
   },
   {
     id: "meme-11",
@@ -306,8 +328,55 @@ function createLocalSession(mode = "classic") {
   };
 }
 
+// ── Outcome "why" helpers ─────────────────────────────────────
+// Keyword heuristics used to pick the signal that "decided" a round when a
+// product's market_signals are plain strings (curated meme products). Typed
+// signals (generated products) are classified directly by their green/red type.
+const GREEN_WORDS = ["viral", "profitable", "retention", "sold out", "dau", "downloads", "signups", "sign-ups", "margin", "invested", "revenue", "growth", "booked", "pre-order", "preorder", "#1", "acquired", "sticky", "adoption", "exits", "love", "sold-out"];
+const RED_WORDS = ["no ", "not ", "n't", "nobody", "nightmare", "regulatory", "sec ", "tos", "throw it away", "throw them away", "scam", "lawsuit", "illegal", "ban", "churn", "refund", "no real value", "no monetization", "caught fire", "sued", "disagree", "looking into it"];
+
+function scoreSignal(text) {
+  const t = (text || "").toLowerCase();
+  let score = 0;
+  for (const w of GREEN_WORDS) if (t.includes(w)) score += 1;
+  for (const w of RED_WORDS) if (t.includes(w)) score -= 1;
+  return score;
+}
+
+// The single signal the player saw that best explains the outcome.
+function decisiveSignal(product, success) {
+  if (Array.isArray(product.signals) && product.signals.length) {
+    const want = success ? "green" : "red";
+    const match = product.signals.filter(s => s.type === want);
+    const pool = match.length ? match : product.signals;
+    return pick(pool).text;
+  }
+  const signals = product.market_signals || [];
+  if (!signals.length) return null;
+  const scored = signals.map(text => ({ text, score: scoreSignal(text) }));
+  scored.sort((a, b) => (success ? b.score - a.score : a.score - b.score));
+  return scored[0].text;
+}
+
+// Why it won/crashed. Prefers an authored verdict; otherwise calls back to
+// the decisive signal so every product still gets a coherent explanation.
+function verdictReason(product, success, signal) {
+  const authored = product.verdict && product.verdict[success ? "win" : "loss"];
+  if (authored) return authored;
+  if (!signal) {
+    return success
+      ? "The market actually loved it. Sometimes the hype is real."
+      : "The hype evaporated. Sometimes a meme is just a meme.";
+  }
+  return success
+    ? `You read it right — "${signal}" was the signal that mattered.`
+    : `The tell was right there: "${signal}".`;
+}
+
 function simulateRound(product, decision, investmentAmount, balance) {
   if (decision === "pass") {
+    // Reveal what would have happened — passing shouldn't feel like a void.
+    const wouldHaveHit = Math.random() < product.successProb;
     return {
       product_id: product.id,
       decision: "pass",
@@ -316,6 +385,14 @@ function simulateRound(product, decision, investmentAmount, balance) {
       new_balance: balance,
       outcome_multiplier: 1,
       outcome_revealed: "You passed. Safe play. (Boring.)",
+      success_prob: product.successProb,
+      bet_fraction: 0,
+      would_have_hit: wouldHaveHit,
+      decisive_signal: decisiveSignal(product, wouldHaveHit),
+      decisive_type: wouldHaveHit ? "green" : "red",
+      verdict_reason: wouldHaveHit
+        ? `It would've hit — ${product.returnMultiplier.toFixed(1)}x left on the table.`
+        : "Good call. This one was heading for the graveyard.",
     };
   }
 
@@ -346,6 +423,8 @@ function simulateRound(product, decision, investmentAmount, balance) {
         `😭 ${product.name} got disrupted by a 19-year-old's side project. Embarrassing.`,
       ];
 
+  const signal = decisiveSignal(product, success);
+
   return {
     product_id: product.id,
     decision: "invest",
@@ -354,6 +433,11 @@ function simulateRound(product, decision, investmentAmount, balance) {
     new_balance: balance + profitLoss,
     outcome_multiplier: success ? product.returnMultiplier : 0,
     outcome_revealed: pick(outcomes),
+    success_prob: product.successProb,
+    bet_fraction: balance > 0 ? investmentAmount / balance : 0,
+    decisive_signal: signal,
+    decisive_type: success ? "green" : "red",
+    verdict_reason: verdictReason(product, success, signal),
   };
 }
 
@@ -531,19 +615,7 @@ export const profileApi = {
     shark_coins: 500,
     level: 1,
   }),
-  getStats: async () => ({
-    investor_score: 0,
-    accuracy: 0,
-    total_profit: 0,
-    total_rounds: 0,
-    biggest_win: 0,
-    current_streak: 0,
-    best_streak: 0,
-    level: 1,
-    xp: 0,
-    persona: "Minnow",
-    risk_profile: "Unknown",
-  }),
+  getStats: async () => getStatsSnapshot(),
   getAchievements: async () => [],
 };
 

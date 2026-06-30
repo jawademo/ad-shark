@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { gameApi } from "../services/api.ts";
 import { v4 as uuidv4 } from "uuid";
+import useStatsStore from "./statsStore.js";
 
 const useGameStore = create((set, get) => ({
   // Session state
@@ -104,6 +105,14 @@ const useGameStore = create((set, get) => ({
       const passed = decision === "pass";
       const profitLoss = result.profit_loss || 0;
 
+      // Record into the persistent player profile (skill metrics).
+      useStatsStore.getState().recordRound({
+        decision,
+        won: !passed && profitLoss > 0,
+        profitLoss,
+        betFraction: result.bet_fraction || 0,
+      });
+
       set({
         rounds: newRounds,
         currentRound: roundData,
@@ -118,6 +127,12 @@ const useGameStore = create((set, get) => ({
           product: currentProduct,
           multiplier: result.outcome_multiplier,
           outcomeLabel: result.outcome_revealed,
+          successProb: result.success_prob,
+          betFraction: result.bet_fraction,
+          wouldHaveHit: result.would_have_hit,
+          decisiveSignal: result.decisive_signal,
+          decisiveType: result.decisive_type,
+          reason: result.verdict_reason,
         },
       });
     } catch (err) {

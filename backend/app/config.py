@@ -5,6 +5,7 @@ All settings loaded from environment variables with sensible defaults for local 
 """
 
 from pydantic_settings import BaseSettings
+from pydantic import model_validator
 from typing import Optional
 
 
@@ -63,6 +64,18 @@ class Settings(BaseSettings):
     STORAGE_PUBLIC_URL: Optional[str] = None
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+
+    @model_validator(mode="after")
+    def _guard_production(self):
+        """Fail fast on insecure production configuration."""
+        if self.ENVIRONMENT == "production":
+            if self.DEBUG:
+                raise ValueError("DEBUG must be false in production (set DEBUG=false).")
+            if self.JWT_SECRET_KEY == "change-me-in-production-use-a-real-secret":
+                raise ValueError(
+                    "JWT_SECRET_KEY is still the default — set a real secret in production."
+                )
+        return self
 
 
 settings = Settings()

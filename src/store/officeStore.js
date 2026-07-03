@@ -96,7 +96,7 @@ function loadState() {
   try {
     const saved = localStorage.getItem("adshark_office");
     if (saved) return JSON.parse(saved);
-  } catch {}
+  } catch { /* ignore corrupt storage */ }
   return {
     totalEarnings: 0,        // cumulative profit across all sessions
     currentTier: 0,          // office tier index

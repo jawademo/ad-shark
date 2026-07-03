@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Trophy, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Calendar, Trophy, Loader2 } from "lucide-react";
 import { challengeApi } from "../services/api.ts";
 
 export default function DailyChallengeScreen() {
@@ -12,11 +12,7 @@ export default function DailyChallengeScreen() {
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadChallenge();
-  }, []);
-
-  const loadChallenge = async () => {
+  const loadChallenge = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -27,7 +23,12 @@ export default function DailyChallengeScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
+    loadChallenge();
+  }, [loadChallenge]);
 
   const handleDecision = (productId, decision) => {
     setDecisions((prev) => ({ ...prev, [productId]: decision }));

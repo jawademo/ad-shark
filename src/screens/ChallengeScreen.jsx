@@ -1,35 +1,31 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Swords, Loader2, Play, ArrowRight } from "lucide-react";
+import { Swords, Play } from "lucide-react";
 import { decodeChallenge } from "../services/api.ts";
 
 export default function ChallengeScreen() {
   const { code } = useParams();
   const navigate = useNavigate();
 
-  const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    // Decode challenge from URL — no backend needed
-    setLoading(true);
+  // Decode the challenge from the URL — pure derivation, no backend needed
+  const { preview, error } = useMemo(() => {
     const decoded = decodeChallenge(code);
     if (decoded && decoded.p && decoded.p.length > 0) {
-      setPreview({
-        challenger_name: decoded.n || "Anonymous Shark",
-        challenger_score: decoded.s || 0,
-        products: decoded.p,
-        decisions: decoded.d || [],
-        product_count: decoded.p.length,
-        mode: "classic",
-        starting_balance: 10000,
-      });
-    } else {
-      setError("Invalid or expired challenge link");
+      return {
+        preview: {
+          challenger_name: decoded.n || "Anonymous Shark",
+          challenger_score: decoded.s || 0,
+          products: decoded.p,
+          decisions: decoded.d || [],
+          product_count: decoded.p.length,
+          mode: "classic",
+          starting_balance: 10000,
+        },
+        error: null,
+      };
     }
-    setLoading(false);
+    return { preview: null, error: "Invalid or expired challenge link" };
   }, [code]);
 
   const handleAccept = () => {
@@ -41,14 +37,6 @@ export default function ChallengeScreen() {
     }
     navigate("/play?mode=challenge");
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-      </div>
-    );
-  }
 
   if (error || !preview) {
     return (

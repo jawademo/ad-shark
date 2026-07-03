@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  TrendingUp, AlertCircle, Loader2,
-  Trophy, Percent, DollarSign, Play, Share2, Link2, Check, MessageCircle, Building2
+  AlertCircle, Loader2,
+  Trophy, DollarSign, Play, Share2, Link2, Check, MessageCircle, Building2
 } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import ResultScreen from "../components/ResultScreen";
@@ -16,9 +16,9 @@ const QUICK_PERCENTS = [10, 25, 50, 100];
 
 export default function InvestScreen() {
   const {
-    status, error, balance, currentProduct, sessionResult,
+    status, balance, currentProduct, sessionResult,
     products, rounds,
-    startSession, makeDecision, resetGame, clearError,
+    startSession, makeDecision, resetGame,
   } = useGameStore();
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
@@ -39,23 +39,25 @@ export default function InvestScreen() {
     }
   }, [status, startSession]);
 
-  // Track office earnings when session ends
+  // Track office earnings when session ends (one-time award side effect)
   useEffect(() => {
     if (status === "ended" && sessionResult && officeEarned === 0) {
       const profit = Math.max(0, (sessionResult.final_balance || 10000) - 10000);
       if (profit > 0) {
-        const newTotal = addEarnings(profit);
+        addEarnings(profit);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- award office earnings once when a session ends
         setOfficeEarned(profit);
       }
     }
     if (status === "playing") {
       setOfficeEarned(0);
     }
-  }, [status, sessionResult]);
+  }, [status, sessionResult, officeEarned, addEarnings]);
 
-  // Reset investment amount when product changes
+  // Reset investment amount when the product changes
   useEffect(() => {
     if (currentProduct && balance > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the bet to 10% when a new product loads
       setAmount(Math.floor(balance * 0.1));
     }
   }, [currentProduct, balance]);

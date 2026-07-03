@@ -81,7 +81,7 @@ const useGameStore = create((set, get) => ({
   },
 
   makeDecision: async (decision, investmentAmount = 0) => {
-    const { sessionId, currentProduct, balance } = get();
+    const { sessionId, currentProduct } = get();
     if (!sessionId || !currentProduct) return;
 
     set({ status: "loading" });

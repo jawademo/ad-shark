@@ -81,14 +81,14 @@ function loadRaw() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return { ...EMPTY, ...JSON.parse(saved) };
-  } catch {}
+  } catch { /* ignore corrupt storage */ }
   return { ...EMPTY };
 }
 
 function saveRaw(raw) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(raw));
-  } catch {}
+  } catch { /* ignore write failure */ }
 }
 
 // Pure computed snapshot — shape matches what StatsScreen reads.

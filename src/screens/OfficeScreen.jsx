@@ -6,7 +6,7 @@ import { TrendingUp, Lock, Check, Sparkles } from "lucide-react";
 export default function OfficeScreen() {
   const {
     totalEarnings, currentTier, ownedItems, sessionsPlayed,
-    getTier, getNextTier, getTiers, getItemsForTier, getAllItems,
+    getTier, getNextTier, getTiers, getAllItems,
     upgradeOffice, buyItem, canAfford,
   } = useOfficeStore();
 

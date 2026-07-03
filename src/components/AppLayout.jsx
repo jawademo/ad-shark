@@ -1,5 +1,4 @@
 import { Outlet, useLocation, Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Play, TrendingUp, ShoppingBag, Calendar, Building2 } from "lucide-react";
 
 const NAV_ITEMS = [

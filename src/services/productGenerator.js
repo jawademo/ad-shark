@@ -209,7 +209,7 @@ function generateRandom() {
 }
 
 // ---- LLM Generator (stub — plug in OpenAI/Anthropic/Ollama here) ----
-async function generateWithLLM(options = {}) {
+async function generateWithLLM() {
   // TODO: implement when ready
   // const { apiKey, model = 'gpt-4o-mini', baseUrl } = options
   // const prompt = `Generate a fake startup product as JSON with fields:

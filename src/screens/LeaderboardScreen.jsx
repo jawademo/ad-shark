@@ -1,18 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Loader2 } from "lucide-react";
-import { leaderboardApi } from "../services/api.js";
+import { leaderboardApi } from "../services/api.ts";
 
 export default function LeaderboardScreen() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [type, setType] = useState("all_time");
 
-  useEffect(() => {
-    loadLeaderboard();
-  }, [type]);
-
-  const loadLeaderboard = async () => {
+  const loadLeaderboard = useCallback(async () => {
     setLoading(true);
     try {
       const data = await leaderboardApi.get(type);
@@ -22,7 +18,12 @@ export default function LeaderboardScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [type]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch / tab change
+    loadLeaderboard();
+  }, [loadLeaderboard]);
 
   return (
     <div className="flex flex-col gap-4 px-4 py-6 max-w-md mx-auto">
@@ -72,7 +73,7 @@ export default function LeaderboardScreen() {
         <div className="space-y-2">
           {entries.map((entry, i) => (
             <motion.div
-              key={entry.user_id}
+              key={entry.user_id ?? entry.username ?? i}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}

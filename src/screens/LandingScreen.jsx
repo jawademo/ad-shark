@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { TrendingUp, Trophy, Share2, Zap } from "lucide-react";
+import { TrendingUp, Trophy, Share2, Zap, Building2 } from "lucide-react";
 
 export default function LandingScreen() {
   return (
@@ -45,16 +45,16 @@ export default function LandingScreen() {
           className="flex flex-col sm:flex-row gap-3 justify-center"
         >
           <Link
-            to="/register"
+            to="/play"
             className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl text-lg transition-colors"
           >
-            Start Playing — Free
+            Play as Guest — Free
           </Link>
           <Link
-            to="/login"
+            to="/register"
             className="px-8 py-4 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl text-lg transition-colors"
           >
-            Sign In
+            Sign Up
           </Link>
         </motion.div>
 
@@ -64,7 +64,7 @@ export default function LandingScreen() {
           transition={{ delay: 0.6 }}
           className="text-gray-600 text-sm mt-4"
         >
-          No download. Play in your browser. 2 minutes.
+          No download · Play in your browser · 2 minutes · Free
         </motion.p>
       </div>
 
@@ -94,6 +94,12 @@ export default function LandingScreen() {
             title: "Climb the Ranks",
             desc: "Earn XP, unlock achievements, discover your investor persona. From Minnow to Great White.",
             color: "text-purple-400",
+          },
+          {
+            icon: Building2,
+            title: "Build Your Empire",
+            desc: "Use profits to upgrade your office — from coffee shop squatter to private island HQ. Flex on lesser sharks.",
+            color: "text-indigo-400",
           },
         ].map(({ icon: Icon, title, desc, color }, i) => (
           <motion.div

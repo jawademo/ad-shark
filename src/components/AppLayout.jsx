@@ -1,10 +1,10 @@
 import { Outlet, useLocation, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Play, TrendingUp, ShoppingBag, Calendar } from "lucide-react";
+import { Play, TrendingUp, ShoppingBag, Calendar, Building2 } from "lucide-react";
 
 const NAV_ITEMS = [
   { path: "/play", icon: Play, label: "Play" },
   { path: "/daily", icon: Calendar, label: "Daily" },
+  { path: "/office", icon: Building2, label: "Office" },
   { path: "/stats", icon: TrendingUp, label: "Stats" },
   { path: "/shop", icon: ShoppingBag, label: "Shop" },
 ];

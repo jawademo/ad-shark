@@ -3,10 +3,10 @@ SQLAlchemy ORM models for ad-shark.
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import datetime
 from sqlalchemy import (
     Column, String, Integer, Boolean, BigInteger, Float,
-    Date, DateTime, ForeignKey, Text, UniqueConstraint, Index, CheckConstraint
+    Date, DateTime, ForeignKey, Text, UniqueConstraint, CheckConstraint
 )
 from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSONB
 from sqlalchemy.orm import relationship

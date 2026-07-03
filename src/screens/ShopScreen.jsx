@@ -1,18 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag, Loader2, Zap, Coins } from "lucide-react";
-import { shopApi } from "../services/api.js";
+import { shopApi } from "../services/api.ts";
 
 export default function ShopScreen() {
   const [boosters, setBoosters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadBoosters();
-  }, []);
-
-  const loadBoosters = async () => {
+  const loadBoosters = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -23,7 +19,12 @@ export default function ShopScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
+    loadBoosters();
+  }, [loadBoosters]);
 
   const handleBuy = async (booster) => {
     try {
@@ -62,13 +63,6 @@ export default function ShopScreen() {
     uncommon: "border-green-500/30",
     rare: "border-blue-500/30",
     legendary: "border-purple-500/30",
-  };
-
-  const rarityBg = {
-    common: "bg-white/5",
-    uncommon: "bg-green-500/5",
-    rare: "bg-blue-500/5",
-    legendary: "bg-purple-500/5",
   };
 
   return (

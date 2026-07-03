@@ -2,13 +2,12 @@
 Game API routes — session management, round processing, scoring.
 """
 
-from uuid import UUID, uuid4
+from uuid import UUID
 from datetime import datetime, timezone, date
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models import (
@@ -20,8 +19,7 @@ from app.schemas import (
 )
 from app.middleware.auth import get_current_user
 from app.services.scoring import (
-    calculate_round_profit, summarize_session, compute_accuracy,
-    compute_risk_factor, assign_persona, assign_risk_profile,
+    calculate_round_profit, summarize_session, compute_risk_factor, assign_persona, assign_risk_profile,
     RoundInput,
 )
 from app.config import settings

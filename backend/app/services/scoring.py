@@ -4,7 +4,6 @@ Calculates investor score, XPS, accuracy, and persona assignments.
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass

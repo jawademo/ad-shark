@@ -2,7 +2,7 @@
 Challenge API routes — daily challenges and friend challenges.
 """
 
-from uuid import UUID, uuid4
+from uuid import UUID
 from datetime import date, datetime, timezone
 import secrets
 
@@ -18,8 +18,7 @@ from app.models import (
 from app.schemas import (
     DailyChallengeResponse, DailyChallengeSubmit, DailyChallengeResult,
     CreateFriendChallengeRequest, FriendChallengeResponse,
-    FriendChallengePreview, FriendChallengeSubmit, FriendChallengeComparison,
-    ProductBrief, SessionResponse,
+    FriendChallengePreview, ProductBrief, SessionResponse,
 )
 from app.middleware.auth import get_current_user
 from app.config import settings

@@ -66,8 +66,18 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
     @model_validator(mode="after")
-    def _guard_production(self):
-        """Fail fast on insecure production configuration."""
+    def _normalize_and_guard(self):
+        """Normalize the DB URL to the async driver, then guard production config."""
+        # Managed hosts (Render, Supabase, Heroku) hand out postgres:// or postgresql://,
+        # but SQLAlchemy's async engine needs the asyncpg driver.
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = "postgresql://" + url[len("postgres://"):]
+        if url.startswith("postgresql://"):
+            url = "postgresql+asyncpg://" + url[len("postgresql://"):]
+        self.DATABASE_URL = url
+
+        # Fail fast on insecure production configuration.
         if self.ENVIRONMENT == "production":
             if self.DEBUG:
                 raise ValueError("DEBUG must be false in production (set DEBUG=false).")

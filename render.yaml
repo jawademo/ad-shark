@@ -1,5 +1,10 @@
-# Render blueprint for the ad-shark FastAPI backend.
-# The frontend deploys separately on Vercel; Postgres on Supabase, Redis on Upstash.
+# Render blueprint for the ad-shark backend + its Postgres database.
+# Near one-click: provisions Postgres, wires DATABASE_URL, and start.sh migrates +
+# seeds on boot. The frontend deploys separately on Vercel.
+databases:
+  - name: adshark-db
+    plan: free
+
 services:
   - type: web
     name: adshark-api
@@ -14,12 +19,11 @@ services:
       - key: DEBUG
         value: "false"
       - key: JWT_SECRET_KEY
-        generateValue: true        # Render generates a strong secret
+        generateValue: true              # Render generates a strong secret
       - key: DATABASE_URL
-        sync: false                # Supabase connection string, as postgresql+asyncpg://...
-      - key: REDIS_URL
-        sync: false                # Upstash Redis URL
+        fromDatabase:
+          name: adshark-db
+          property: connectionString     # app normalizes postgres:// → asyncpg automatically
       - key: CORS_ORIGINS
-        sync: false                # JSON list, e.g. ["https://adshark.io"]
-# The Docker image's start.sh runs `alembic upgrade head` before booting uvicorn,
-# so schema migrations apply automatically on every deploy.
+        sync: false                      # JSON list, e.g. ["https://ad-shark-xxx.vercel.app"]
+# Note: the app does not use Redis, so no REDIS_URL is needed.

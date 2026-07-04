@@ -9,6 +9,7 @@ services:
   - type: web
     name: adshark-api
     runtime: docker
+    plan: free
     rootDir: backend
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health

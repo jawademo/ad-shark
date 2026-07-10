@@ -3,10 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Swords, Play } from "lucide-react";
 import { decodeChallenge } from "../services/api.ts";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 export default function ChallengeScreen() {
   const { code } = useParams();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   // Decode the challenge from the URL — pure derivation, no backend needed
   const { preview, error } = useMemo(() => {
@@ -25,8 +27,8 @@ export default function ChallengeScreen() {
         error: null,
       };
     }
-    return { preview: null, error: "Invalid or expired challenge link" };
-  }, [code]);
+    return { preview: null, error: t("challenge.invalid") };
+  }, [code, t]);
 
   const handleAccept = () => {
     // Store the challenge products in sessionStorage and navigate to play
@@ -42,13 +44,13 @@ export default function ChallengeScreen() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 bg-gray-950">
         <Swords className="w-12 h-12 text-gray-600" />
-        <h2 className="text-white text-xl font-bold">Challenge Not Found</h2>
-        <p className="text-gray-400 text-center">{error || "This challenge link may have expired."}</p>
+        <h2 className="text-white text-xl font-bold">{t("challenge.notFoundTitle")}</h2>
+        <p className="text-gray-400 text-center">{error || t("challenge.expired")}</p>
         <button
           onClick={() => navigate("/")}
           className="px-6 py-3 bg-amber-500 text-black rounded-xl font-semibold"
         >
-          Go Home
+          {t("common.goHome")}
         </button>
       </div>
     );
@@ -69,33 +71,33 @@ export default function ChallengeScreen() {
 
         <div>
           <h1 className="text-2xl font-black text-white">
-            {preview.challenger_name} challenged you!
+            {t("challenge.challengedYou", { name: preview.challenger_name })}
           </h1>
           <p className="text-gray-400 mt-1">
-            Same products. Same conditions. Who has the sharper instincts?
+            {t("challenge.subtitle")}
           </p>
         </div>
 
         {/* Challenge details */}
         <div className="rounded-xl border border-white/10 p-4 space-y-2" style={{ background: '#12121f' }}>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Mode</span>
-            <span className="text-white font-medium capitalize">{preview.mode}</span>
+            <span className="text-gray-400">{t("challenge.mode")}</span>
+            <span className="text-white font-medium capitalize">{t("challenge.modeClassic")}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Products</span>
-            <span className="text-white font-medium">{preview.product_count} pitches</span>
+            <span className="text-gray-400">{t("challenge.products")}</span>
+            <span className="text-white font-medium">{t("challenge.pitches", { n: preview.product_count })}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Starting Balance</span>
+            <span className="text-gray-400">{t("challenge.startingBalance")}</span>
             <span className="text-amber-400 font-medium">{formatMoney(preview.starting_balance)}</span>
           </div>
           <div className="flex justify-between text-sm border-t border-white/5 pt-2">
-            <span className="text-gray-400">Their Final Balance</span>
+            <span className="text-gray-400">{t("challenge.theirFinal")}</span>
             <span className="text-amber-400 font-bold">{formatMoney(challengerScore)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Their Profit/Loss</span>
+            <span className="text-gray-400">{t("challenge.theirPL")}</span>
             <span className={`font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {profit >= 0 ? '+' : ''}{formatMoney(profit)}
             </span>
@@ -104,7 +106,7 @@ export default function ChallengeScreen() {
 
         {/* Preview of products they'll see */}
         <div className="text-left">
-          <p className="text-gray-500 text-xs uppercase tracking-wide mb-2">You'll evaluate:</p>
+          <p className="text-gray-500 text-xs uppercase tracking-wide mb-2">{t("challenge.youllEvaluate")}</p>
           <div className="space-y-1.5">
             {preview.products.slice(0, 3).map((p, i) => (
               <div key={i} className="flex items-center gap-2 text-sm bg-white/5 rounded-lg px-3 py-2">
@@ -115,7 +117,7 @@ export default function ChallengeScreen() {
             ))}
             {preview.products.length > 3 && (
               <p className="text-gray-600 text-xs text-center pt-1">
-                + {preview.products.length - 3} more...
+                {t("challenge.andMore", { n: preview.products.length - 3 })}
               </p>
             )}
           </div>
@@ -127,11 +129,11 @@ export default function ChallengeScreen() {
           className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl flex items-center justify-center gap-2 text-lg transition-colors"
         >
           <Play className="w-5 h-5" />
-          Accept Challenge
+          {t("challenge.accept")}
         </button>
 
         <p className="text-gray-600 text-xs">
-          No account needed · Play in your browser · 2 minutes
+          {t("challenge.noAccount")}
         </p>
       </motion.div>
     </div>

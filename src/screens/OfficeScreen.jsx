@@ -2,8 +2,10 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useOfficeStore from "../store/officeStore.js";
 import { TrendingUp, Lock, Check, Sparkles } from "lucide-react";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 export default function OfficeScreen() {
+  const { t } = useI18n();
   const {
     totalEarnings, currentTier, ownedItems, sessionsPlayed,
     getTier, getNextTier, getTiers, getAllItems,
@@ -74,7 +76,7 @@ export default function OfficeScreen() {
         <div className="absolute top-4 right-4">
           <div className="px-3 py-1.5 rounded-full text-xs font-bold bg-black/40 backdrop-blur text-amber-400 flex items-center gap-1">
             <TrendingUp className="w-3 h-3" />
-            {formatMoney(totalEarnings)} earned
+            {t("office.earned", { amount: formatMoney(totalEarnings) })}
           </div>
         </div>
       </div>
@@ -96,8 +98,8 @@ export default function OfficeScreen() {
           </div>
 
           <div className="flex gap-4 text-xs text-gray-500 pt-2 border-t border-white/5">
-            <span>📊 {sessionsPlayed} sessions played</span>
-            <span>🏆 {ownedItems.length} items owned</span>
+            <span>📊 {t("office.sessionsPlayed", { n: sessionsPlayed })}</span>
+            <span>🏆 {t("office.itemsOwned", { n: ownedItems.length })}</span>
           </div>
         </motion.div>
 
@@ -113,7 +115,7 @@ export default function OfficeScreen() {
             <div className="flex items-center gap-3">
               <span className="text-3xl">{nextTier.emoji}</span>
               <div className="flex-1">
-                <h3 className="text-white font-bold">Upgrade to {nextTier.name}</h3>
+                <h3 className="text-white font-bold">{t("office.upgradeTo", { name: nextTier.name })}</h3>
                 <p className="text-gray-500 text-xs">{nextTier.description}</p>
               </div>
             </div>
@@ -133,7 +135,7 @@ export default function OfficeScreen() {
                     : "bg-white/5 text-gray-600 cursor-not-allowed"
                 }`}
               >
-                {canAfford(nextTier.cost) ? "Upgrade Now" : `Need ${formatMoney(nextTier.cost - totalEarnings)} more`}
+                {canAfford(nextTier.cost) ? t("office.upgradeNow") : t("office.needMore", { amount: formatMoney(nextTier.cost - totalEarnings) })}
               </button>
             </div>
           </motion.div>
@@ -146,8 +148,8 @@ export default function OfficeScreen() {
             style={{ background: "#0a1a0a" }}
           >
             <span className="text-4xl">👑</span>
-            <h3 className="text-white font-bold mt-2">Max Tier Reached!</h3>
-            <p className="text-gray-500 text-sm">You own a private island. There's nothing left to conquer. Touch grass.</p>
+            <h3 className="text-white font-bold mt-2">{t("office.maxTier")}</h3>
+            <p className="text-gray-500 text-sm">{t("office.maxTierDesc")}</p>
           </motion.div>
         )}
 
@@ -175,8 +177,8 @@ export default function OfficeScreen() {
             onClick={() => setShowItems(!showItems)}
             className="w-full flex items-center justify-between mb-3"
           >
-            <h3 className="text-white font-bold text-lg">Office Decor</h3>
-            <span className="text-gray-500 text-sm">{showItems ? "Hide" : "Show"}</span>
+            <h3 className="text-white font-bold text-lg">{t("office.decor")}</h3>
+            <span className="text-gray-500 text-sm">{showItems ? t("office.hide") : t("office.show")}</span>
           </button>
 
           <AnimatePresence>
@@ -208,7 +210,7 @@ export default function OfficeScreen() {
                       </div>
                       {owned ? (
                         <span className="text-emerald-400 flex items-center gap-1 text-xs font-bold">
-                          <Check className="w-3 h-3" /> Owned
+                          <Check className="w-3 h-3" /> {t("office.ownedTag")}
                         </span>
                       ) : (
                         <div className="flex flex-col items-end gap-1">
@@ -222,7 +224,7 @@ export default function OfficeScreen() {
                                 : "bg-white/5 text-gray-600 cursor-not-allowed"
                             }`}
                           >
-                            {affordable ? "Buy" : "🔒"}
+                            {affordable ? t("office.buy") : "🔒"}
                           </button>
                         </div>
                       )}
@@ -234,7 +236,7 @@ export default function OfficeScreen() {
                 {allItems.filter(item => item.tier === currentTier + 1).length > 0 && (
                   <>
                     <p className="text-gray-600 text-xs mt-4 mb-1 flex items-center gap-1">
-                      <Lock className="w-3 h-3" /> Unlock at {nextTier?.name || "next tier"}
+                      <Lock className="w-3 h-3" /> {t("office.unlockAt", { name: nextTier?.name || t("office.nextTier") })}
                     </p>
                     {allItems.filter(item => item.tier === currentTier + 1).map((item) => (
                       <div

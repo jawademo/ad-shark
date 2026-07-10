@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { UserPlus, AlertCircle } from "lucide-react";
 import useAuthStore from "../store/authStore.js";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 export default function RegisterScreen() {
+  const { t } = useI18n();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +20,7 @@ export default function RegisterScreen() {
     setError(null);
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("register.errShortPw"));
       return;
     }
 
@@ -27,7 +29,7 @@ export default function RegisterScreen() {
       await register(username, email, password);
       navigate("/play");
     } catch (err) {
-      setError(err.message || "Registration failed. Try a different username.");
+      setError(err.message || t("register.errFail"));
     } finally {
       setLoading(false);
     }
@@ -45,7 +47,7 @@ export default function RegisterScreen() {
           <h1 className="text-3xl font-bold text-white mb-2">
             ad-shark
           </h1>
-          <p className="text-gray-400">Join the tank.</p>
+          <p className="text-gray-400">{t("register.joinTank")}</p>
         </div>
 
         {/* Error */}
@@ -67,7 +69,7 @@ export default function RegisterScreen() {
               htmlFor="username"
               className="block text-sm font-medium text-gray-300 mb-1"
             >
-              Username
+              {t("register.username")}
             </label>
             <input
               id="username"
@@ -89,7 +91,7 @@ export default function RegisterScreen() {
               htmlFor="email"
               className="block text-sm font-medium text-gray-300 mb-1"
             >
-              Email
+              {t("register.email")}
             </label>
             <input
               id="email"
@@ -108,7 +110,7 @@ export default function RegisterScreen() {
               htmlFor="password"
               className="block text-sm font-medium text-gray-300 mb-1"
             >
-              Password
+              {t("register.password")}
             </label>
             <input
               id="password"
@@ -119,7 +121,7 @@ export default function RegisterScreen() {
               minLength={8}
               autoComplete="new-password"
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Min. 8 characters"
+              placeholder={t("register.pwPlaceholder")}
             />
           </div>
 
@@ -129,23 +131,23 @@ export default function RegisterScreen() {
             className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
           >
             {loading ? (
-              <span className="animate-pulse">Creating account...</span>
+              <span className="animate-pulse">{t("register.creating")}</span>
             ) : (
               <>
                 <UserPlus className="w-4 h-4" />
-                Create Account
+                {t("register.createAccount")}
               </>
             )}
           </button>
         </form>
 
         <p className="text-center mt-6 text-gray-400 text-sm">
-          Already have an account?{" "}
+          {t("register.haveAccount")}{" "}
           <Link
             to="/login"
             className="text-blue-400 hover:text-blue-300 font-medium"
           >
-            Sign in
+            {t("register.signIn")}
           </Link>
         </p>
       </motion.div>

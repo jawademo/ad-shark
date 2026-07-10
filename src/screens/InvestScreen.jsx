@@ -11,6 +11,7 @@ import useGameStore from "../store/gameStore";
 import useAuthStore from "../store/authStore";
 import useOfficeStore from "../store/officeStore.js";
 import { encodeChallenge } from "../services/api.ts";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 const QUICK_PERCENTS = [10, 25, 50, 100];
 
@@ -22,6 +23,7 @@ export default function InvestScreen() {
   } = useGameStore();
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { addEarnings, totalEarnings, getTier } = useOfficeStore();
   const [officeEarned, setOfficeEarned] = useState(0);
 
@@ -34,10 +36,10 @@ export default function InvestScreen() {
   useEffect(() => {
     if (status === "idle") {
       startSession("classic").catch((err) => {
-        setLastError(err.message || "Failed to start game");
+        setLastError(err.message || t("invest.errStart"));
       });
     }
-  }, [status, startSession]);
+  }, [status, startSession, t]);
 
   // Track office earnings when session ends (one-time award side effect)
   useEffect(() => {
@@ -73,7 +75,7 @@ export default function InvestScreen() {
     try {
       await makeDecision("invest", amount);
     } catch (err) {
-      setLastError(err.message || "Something went wrong");
+      setLastError(err.message || t("invest.errGeneric"));
     } finally {
       setRoundInProgress(false);
     }
@@ -85,7 +87,7 @@ export default function InvestScreen() {
     try {
       await makeDecision("pass", 0);
     } catch (err) {
-      setLastError(err.message || "Something went wrong");
+      setLastError(err.message || t("invest.errGeneric"));
     } finally {
       setRoundInProgress(false);
     }
@@ -94,7 +96,7 @@ export default function InvestScreen() {
   const handlePlayAgain = () => {
     resetGame();
     startSession("classic").catch((err) => {
-      setLastError(err.message || "Failed to start new game");
+      setLastError(err.message || t("invest.errStartNew"));
     });
   };
 
@@ -110,7 +112,7 @@ export default function InvestScreen() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-950">
         <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-        <p className="text-gray-400">Loading your products...</p>
+        <p className="text-gray-400">{t("invest.loading")}</p>
       </div>
     );
   }
@@ -121,7 +123,7 @@ export default function InvestScreen() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 bg-gray-950">
         <AlertCircle className="w-12 h-12 text-red-400" />
-        <h2 className="text-white text-xl font-bold">Couldn't start game</h2>
+        <h2 className="text-white text-xl font-bold">{t("invest.errTitle")}</h2>
         <p className="text-gray-400 text-center max-w-xs">{lastError}</p>
         <button
           onClick={() => {
@@ -130,7 +132,7 @@ export default function InvestScreen() {
           }}
           className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-500"
         >
-          Try Again
+          {t("common.tryAgain")}
         </button>
       </div>
     );
@@ -148,7 +150,7 @@ export default function InvestScreen() {
       playerName
     );
     const challengeUrl = `${window.location.origin}/challenge/${challengeCode}`;
-    const shareText = `I turned $10k into ${formatMoney(sr.final_balance)} on ad-shark 🦈 Think you can do better? Beat my score:`;
+    const shareText = t("invest.shareText", { amount: formatMoney(sr.final_balance) });
 
     return (
       <motion.div
@@ -158,24 +160,24 @@ export default function InvestScreen() {
       >
         <div className="text-center">
           <Trophy className="w-12 h-12 text-amber-400 mx-auto mb-2" />
-          <h2 className="text-2xl font-black text-white">Session Complete!</h2>
-          <p className="text-gray-400">Great instincts, {playerName}.</p>
+          <h2 className="text-2xl font-black text-white">{t("invest.sessionComplete")}</h2>
+          <p className="text-gray-400">{t("invest.greatInstincts", { name: playerName })}</p>
         </div>
 
         {/* Score card */}
         <div className="rounded-2xl border border-white/10 p-5 space-y-3" style={{ background: '#12121f' }}>
           <div className="flex justify-between">
-            <span className="text-gray-400">Final Balance</span>
+            <span className="text-gray-400">{t("invest.finalBalance")}</span>
             <span className="text-white font-bold">{formatMoney(sr.final_balance)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Profit / Loss</span>
+            <span className="text-gray-400">{t("invest.profitLoss")}</span>
             <span className={`font-bold ${sr.final_balance >= 10000 ? 'text-green-400' : 'text-red-400'}`}>
               {sr.final_balance >= 10000 ? '+' : ''}{formatMoney(sr.final_balance - 10000)}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Rounds Played</span>
+            <span className="text-gray-400">{t("invest.roundsPlayed")}</span>
             <span className="text-white font-bold">{sr.rounds_played || 5}</span>
           </div>
         </div>
@@ -183,9 +185,9 @@ export default function InvestScreen() {
         {/* Challenge a Friend */}
         <div className="rounded-2xl border border-amber-500/20 p-4 space-y-3" style={{ background: '#1a1a0a' }}>
           <h3 className="text-amber-400 font-bold text-sm flex items-center gap-2">
-            <Share2 className="w-4 h-4" /> Challenge a Friend
+            <Share2 className="w-4 h-4" /> {t("invest.challengeFriend")}
           </h3>
-          <p className="text-gray-400 text-xs">Send them the same products. See who's the better shark.</p>
+          <p className="text-gray-400 text-xs">{t("invest.challengeDesc")}</p>
           <div className="flex gap-2">
             <button
               onClick={() => {
@@ -195,7 +197,7 @@ export default function InvestScreen() {
               }}
               className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-lg text-sm flex items-center justify-center gap-2"
             >
-              {copiedLink ? <><Check className="w-4 h-4" /> Copied!</> : <><Link2 className="w-4 h-4" /> Copy Link</>}
+              {copiedLink ? <><Check className="w-4 h-4" /> {t("invest.copied")}</> : <><Link2 className="w-4 h-4" /> {t("invest.copyLink")}</>}
             </button>
             <a
               href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(challengeUrl)}`}
@@ -203,7 +205,7 @@ export default function InvestScreen() {
               rel="noopener noreferrer"
               className="flex-1 py-2.5 bg-white/10 hover:bg-white/15 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2"
             >
-              <MessageCircle className="w-4 h-4" /> Share on X
+              <MessageCircle className="w-4 h-4" /> {t("invest.shareX")}
             </a>
           </div>
         </div>
@@ -217,14 +219,14 @@ export default function InvestScreen() {
             style={{ background: '#0a0a1f' }}
           >
             <h3 className="text-indigo-400 font-bold text-sm flex items-center gap-2">
-              <Building2 className="w-4 h-4" /> Office Earnings
+              <Building2 className="w-4 h-4" /> {t("invest.officeEarnings")}
             </h3>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Profit added to office</span>
+              <span className="text-gray-400">{t("invest.profitToOffice")}</span>
               <span className="text-emerald-400 font-bold">+{formatMoney(officeEarned)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Total office balance</span>
+              <span className="text-gray-400">{t("invest.totalOffice")}</span>
               <span className="text-indigo-400 font-bold">{formatMoney(totalEarnings)}</span>
             </div>
             <div className="flex items-center gap-2 mt-2">
@@ -235,7 +237,7 @@ export default function InvestScreen() {
               onClick={() => navigate("/office")}
               className="w-full py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold rounded-lg text-sm mt-1"
             >
-              View Office →
+              {t("invest.viewOffice")}
             </button>
           </motion.div>
         )}
@@ -247,13 +249,13 @@ export default function InvestScreen() {
             className="flex-1 py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl flex items-center justify-center gap-2"
           >
             <Play className="w-4 h-4" />
-            Play Again
+            {t("invest.playAgain")}
           </button>
           <button
             onClick={() => navigate("/leaderboard")}
             className="flex-1 py-3.5 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl"
           >
-            Leaderboard
+            {t("invest.leaderboard")}
           </button>
         </div>
       </motion.div>
@@ -294,14 +296,14 @@ export default function InvestScreen() {
         style={{ background: '#12121f' }}>
 
         <div className="flex justify-between items-center">
-          <span className="text-white/50 text-sm">Your balance</span>
+          <span className="text-white/50 text-sm">{t("invest.yourBalance")}</span>
           <span className="font-bold text-amber-400">{formatMoney(balance)}</span>
         </div>
 
         {/* Bet amount display */}
         <div className="text-center">
           <div className="text-4xl font-black text-white">{formatMoney(amount)}</div>
-          <div className="text-white/40 text-sm mt-1">{pct}% of your balance</div>
+          <div className="text-white/40 text-sm mt-1">{t("invest.pctOfBalance", { pct })}</div>
         </div>
 
         {/* Slider */}
@@ -334,7 +336,7 @@ export default function InvestScreen() {
                   : 'bg-white/10 text-white/60 hover:bg-white/20'
               }`}
             >
-              {p === 100 ? 'ALL IN' : `${p}%`}
+              {p === 100 ? t("invest.allIn") : `${p}%`}
             </button>
           ))}
         </div>
@@ -349,7 +351,7 @@ export default function InvestScreen() {
             {roundInProgress ? (
               <Loader2 className="w-5 h-5 animate-spin mx-auto" />
             ) : (
-              'PASS'
+              t("invest.pass")
             )}
           </button>
           <button
@@ -367,7 +369,7 @@ export default function InvestScreen() {
             ) : (
               <>
                 <DollarSign className="w-5 h-5" />
-                INVEST
+                {t("invest.investBtn")}
               </>
             )}
           </button>

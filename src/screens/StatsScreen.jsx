@@ -3,9 +3,11 @@ import { motion } from "framer-motion";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { profileApi } from "../services/api.ts";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 export default function StatsScreen() {
   const location = useLocation();
+  const { t } = useI18n();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,11 +19,12 @@ export default function StatsScreen() {
       const data = await profileApi.getStats();
       setStats(data);
     } catch (err) {
-      setError(err.message || "Failed to load stats");
-    } finally {
+      setError(err.message || t("stats.errLoad"));
+    }
+    finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount / navigation
@@ -52,7 +55,7 @@ export default function StatsScreen() {
           onClick={loadStats}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium"
         >
-          Retry
+          {t("common.retry")}
         </button>
       </div>
     );
@@ -61,21 +64,21 @@ export default function StatsScreen() {
   if (!stats) return null;
 
   const statItems = [
-    { label: "Investor Score", value: stats.investor_score?.toLocaleString(), emoji: "🏆", color: "#f59e0b" },
-    { label: "Accuracy", value: `${Math.round((stats.accuracy || 0) * 100)}%`, emoji: "🎯", color: "#6366f1" },
-    { label: "Total P&L", value: formatMoney(stats.total_profit), emoji: stats.total_profit >= 0 ? "📈" : "📉", color: stats.total_profit >= 0 ? "#10b981" : "#ef4444" },
-    { label: "Deals Evaluated", value: stats.total_rounds, emoji: "📊", color: "#06b6d4" },
-    { label: "Biggest Win", value: formatMoney(stats.biggest_win), emoji: "🚀", color: "#22c55e" },
-    { label: "Current Streak", value: stats.current_streak, emoji: "🔥", color: "#f97316" },
-    { label: "Best Streak", value: stats.best_streak, emoji: "⚡", color: "#a855f7" },
-    { label: "Level", value: stats.level, emoji: "⭐", color: "#eab308" },
+    { label: t("stats.investorScore"), value: stats.investor_score?.toLocaleString(), emoji: "🏆", color: "#f59e0b" },
+    { label: t("stats.accuracy"), value: `${Math.round((stats.accuracy || 0) * 100)}%`, emoji: "🎯", color: "#6366f1" },
+    { label: t("stats.totalPL"), value: formatMoney(stats.total_profit), emoji: stats.total_profit >= 0 ? "📈" : "📉", color: stats.total_profit >= 0 ? "#10b981" : "#ef4444" },
+    { label: t("stats.dealsEvaluated"), value: stats.total_rounds, emoji: "📊", color: "#06b6d4" },
+    { label: t("stats.biggestWin"), value: formatMoney(stats.biggest_win), emoji: "🚀", color: "#22c55e" },
+    { label: t("stats.currentStreak"), value: stats.current_streak, emoji: "🔥", color: "#f97316" },
+    { label: t("stats.bestStreak"), value: stats.best_streak, emoji: "⚡", color: "#a855f7" },
+    { label: t("stats.level"), value: stats.level, emoji: "⭐", color: "#eab308" },
   ];
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-black text-white">Your Stats</h2>
+        <h2 className="text-xl font-black text-white">{t("stats.title")}</h2>
         {stats.persona && (
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
             {stats.persona}
@@ -116,14 +119,14 @@ export default function StatsScreen() {
             }}
           />
         </div>
-        <p className="text-white/30 text-xs">Level {stats.level} → Level {(stats.level || 1) + 1}</p>
+        <p className="text-white/30 text-xs">{t("stats.levelToLevel", { a: stats.level, b: (stats.level || 1) + 1 })}</p>
       </div>
 
       {/* Risk profile */}
       {stats.risk_profile && (
         <div className="rounded-2xl border border-white/10 p-4 text-center"
           style={{ background: '#12121f' }}>
-          <p className="text-white/40 text-xs uppercase tracking-wide">Risk Profile</p>
+          <p className="text-white/40 text-xs uppercase tracking-wide">{t("stats.riskProfile")}</p>
           <p className="text-white font-bold mt-1">{stats.risk_profile}</p>
         </div>
       )}

@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
 import useGameStore from '../store/gameStore'
 import ProductCard from './ProductCard'
+import { useI18n } from '../i18n/LanguageContext.jsx'
 
 export default function ResultScreen() {
   const { lastResult, advanceToNext, balance } = useGameStore()
+  const { t } = useI18n()
 
   if (!lastResult) return null
 
@@ -55,14 +57,14 @@ export default function ResultScreen() {
 
         {isPass ? (
           <>
-            <h2 className="text-2xl font-black text-white">Passed</h2>
+            <h2 className="text-2xl font-black text-white">{t("result.passed")}</h2>
             <p className="text-white/50 mt-1 text-sm">
-              {product?.name} — you sat this one out.
+              {t("result.passedSub", { name: product?.name })}
             </p>
           </>
         ) : won ? (
           <>
-            <h2 className="text-2xl font-black text-emerald-400">WINNER!</h2>
+            <h2 className="text-2xl font-black text-emerald-400">{t("result.winner")}</h2>
             <p className="text-white/80 mt-1.5 text-sm leading-snug">{outcomeLabel}</p>
             <div className="text-3xl font-black text-emerald-300 mt-3">
               {formatMoney(gained)}
@@ -73,20 +75,20 @@ export default function ResultScreen() {
           </>
         ) : (
           <>
-            <h2 className="text-2xl font-black text-red-400">FLOPPED</h2>
+            <h2 className="text-2xl font-black text-red-400">{t("result.flopped")}</h2>
             <p className="text-white/80 mt-1.5 text-sm leading-snug">{outcomeLabel}</p>
             <div className="text-3xl font-black text-red-300 mt-3">
               {formatMoney(-amount)}
             </div>
             <div className="text-white/40 text-sm mt-1">
-              Lost ${amount?.toLocaleString()}
+              {t("result.lost", { amount: amount?.toLocaleString() })}
             </div>
           </>
         )}
 
         {/* Balance */}
         <div className="mt-4 pt-4 border-t border-white/10">
-          <span className="text-white/40 text-sm">Balance: </span>
+          <span className="text-white/40 text-sm">{t("result.balance")}</span>
           <span className="font-bold text-amber-400">${balance?.toLocaleString()}</span>
         </div>
       </motion.div>
@@ -101,7 +103,7 @@ export default function ResultScreen() {
           style={{ background: '#12121f' }}
         >
           <p className="text-white/30 text-xs uppercase tracking-wider">
-            {isPass ? 'What you dodged' : 'The verdict'}
+            {isPass ? t("result.whatDodged") : t("result.verdict")}
           </p>
 
           {reason && (
@@ -124,9 +126,9 @@ export default function ResultScreen() {
           {oddsPct != null && (
             <div className="space-y-1.5 pt-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-white/50">Real odds of success</span>
+                <span className="text-white/50">{t("result.realOdds")}</span>
                 <span className="font-bold" style={{ color: oddsColor }}>
-                  {oddsPct}%{!isPass && betPct ? ` · you bet ${betPct}%` : ''}
+                  {oddsPct}%{!isPass && betPct ? t("result.youBet", { pct: betPct }) : ''}
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -150,7 +152,7 @@ export default function ResultScreen() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <p className="text-white/30 text-xs uppercase tracking-wider mb-2 px-1">Product recap</p>
+          <p className="text-white/30 text-xs uppercase tracking-wider mb-2 px-1">{t("result.productRecap")}</p>
           <ProductCard product={product} compact />
         </motion.div>
       )}
@@ -164,7 +166,7 @@ export default function ResultScreen() {
         className="w-full py-4 rounded-2xl font-black text-black text-lg transition-all active:scale-95"
         style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)' }}
       >
-        Next Deal →
+        {t("result.nextDeal")}
       </motion.button>
     </motion.div>
   )

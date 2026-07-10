@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { getLang } from "../i18n/lang.js";
 
 // ── Persistent player profile (skill metrics) ─────────────────
 // This is the "how good are you" spine: lifetime P&L, accuracy, streaks,
@@ -10,38 +11,44 @@ import { create } from "zustand";
 
 const STORAGE_KEY = "adshark_stats";
 
+// Localized labels for the identity metrics (persona / accuracy / risk).
+function L(en, es) {
+  return getLang() === "es" ? es : en;
+}
+
 // Shark tiers (primary identity, derived from Investor Score) — docs §3.2
 const SHARK_TIERS = [
-  { min: 100000, title: "Great White" },
-  { min: 50000, title: "Tiger Shark" },
-  { min: 15000, title: "Bull Shark" },
-  { min: 5000, title: "Reef Shark" },
-  { min: 1000, title: "Piranha" },
-  { min: 0, title: "Minnow" },
+  { min: 100000, en: "Great White", es: "Gran Blanco" },
+  { min: 50000, en: "Tiger Shark", es: "Tiburón Tigre" },
+  { min: 15000, en: "Bull Shark", es: "Tiburón Toro" },
+  { min: 5000, en: "Reef Shark", es: "Tiburón de Arrecife" },
+  { min: 1000, en: "Piranha", es: "Piraña" },
+  { min: 0, en: "Minnow", es: "Sardina" },
 ];
 
 // Accuracy ratings — docs §3.3
 function accuracyRating(accuracy, totalInvestments) {
-  if (totalInvestments < 1) return "Unrated";
-  if (accuracy >= 0.9) return "Oracle";
-  if (accuracy >= 0.75) return "Sharp Eye";
-  if (accuracy >= 0.6) return "Solid Instinct";
-  if (accuracy >= 0.45) return "Coin Flip";
-  return "Guppy";
+  if (totalInvestments < 1) return L("Unrated", "Sin calificar");
+  if (accuracy >= 0.9) return L("Oracle", "Oráculo");
+  if (accuracy >= 0.75) return L("Sharp Eye", "Ojo Agudo");
+  if (accuracy >= 0.6) return L("Solid Instinct", "Buen Instinto");
+  if (accuracy >= 0.45) return L("Coin Flip", "Cara o Cruz");
+  return L("Guppy", "Guppy");
 }
 
 // Risk profile from avg bet % of bankroll — docs §3.4
 function riskProfile(avgBetFraction, totalInvestments) {
-  if (totalInvestments < 1) return "Unknown";
+  if (totalInvestments < 1) return L("Unknown", "Desconocido");
   const pct = avgBetFraction;
   if (pct >= 0.5) return "YOLO";
-  if (pct >= 0.25) return "Aggressive";
-  if (pct >= 0.1) return "Balanced";
-  return "Conservative";
+  if (pct >= 0.25) return L("Aggressive", "Agresivo");
+  if (pct >= 0.1) return L("Balanced", "Equilibrado");
+  return L("Conservative", "Conservador");
 }
 
 function sharkTier(investorScore) {
-  return SHARK_TIERS.find((t) => investorScore >= t.min)?.title || "Minnow";
+  const tier = SHARK_TIERS.find((t) => investorScore >= t.min) || SHARK_TIERS[SHARK_TIERS.length - 1];
+  return L(tier.en, tier.es);
 }
 
 // Investor Score — weighted blend (docs §3.2: profit 40 / accuracy 25 /

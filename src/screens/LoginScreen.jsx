@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { LogIn, AlertCircle } from "lucide-react";
 import useAuthStore from "../store/authStore.js";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 export default function LoginScreen() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -20,7 +22,7 @@ export default function LoginScreen() {
       await login(email, password);
       navigate("/play");
     } catch (err) {
-      setError(err.message || "Login failed. Check your credentials.");
+      setError(err.message || t("login.errFail"));
     } finally {
       setLoading(false);
     }
@@ -38,7 +40,7 @@ export default function LoginScreen() {
           <h1 className="text-3xl font-bold text-white mb-2">
             ad-shark
           </h1>
-          <p className="text-gray-400">Welcome back, shark.</p>
+          <p className="text-gray-400">{t("login.welcome")}</p>
         </div>
 
         {/* Error */}
@@ -60,7 +62,7 @@ export default function LoginScreen() {
               htmlFor="email"
               className="block text-sm font-medium text-gray-300 mb-1"
             >
-              Email
+              {t("login.email")}
             </label>
             <input
               id="email"
@@ -79,7 +81,7 @@ export default function LoginScreen() {
               htmlFor="password"
               className="block text-sm font-medium text-gray-300 mb-1"
             >
-              Password
+              {t("login.password")}
             </label>
             <input
               id="password"
@@ -99,23 +101,23 @@ export default function LoginScreen() {
             className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
           >
             {loading ? (
-              <span className="animate-pulse">Logging in...</span>
+              <span className="animate-pulse">{t("login.loggingIn")}</span>
             ) : (
               <>
                 <LogIn className="w-4 h-4" />
-                Sign In
+                {t("login.signIn")}
               </>
             )}
           </button>
         </form>
 
         <p className="text-center mt-6 text-gray-400 text-sm">
-          Don't have an account?{" "}
+          {t("login.noAccount")}{" "}
           <Link
             to="/register"
             className="text-blue-400 hover:text-blue-300 font-medium"
           >
-            Create one
+            {t("login.createOne")}
           </Link>
         </p>
       </motion.div>

@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag, Loader2, Zap, Coins } from "lucide-react";
 import { shopApi } from "../services/api.ts";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 export default function ShopScreen() {
+  const { t } = useI18n();
   const [boosters, setBoosters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,11 +17,11 @@ export default function ShopScreen() {
       const data = await shopApi.getBoosters();
       setBoosters(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || "Failed to load shop");
+      setError(err.message || t("shop.errLoad"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
@@ -52,7 +54,7 @@ export default function ShopScreen() {
           onClick={loadBoosters}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium"
         >
-          Retry
+          {t("common.retry")}
         </button>
       </div>
     );
@@ -69,13 +71,13 @@ export default function ShopScreen() {
     <div className="space-y-4">
       <h2 className="text-xl font-black text-white flex items-center gap-2">
         <ShoppingBag className="w-5 h-5 text-amber-400" />
-        Booster Shop
+        {t("shop.title")}
       </h2>
-      <p className="text-white/40 text-sm">Spend Shark Coins on power-ups for your next session.</p>
+      <p className="text-white/40 text-sm">{t("shop.subtitle")}</p>
 
       {boosters.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No boosters available yet.</p>
+          <p className="text-gray-500">{t("shop.empty")}</p>
         </div>
       )}
 
@@ -102,13 +104,13 @@ export default function ShopScreen() {
                       ? 'bg-green-500/10 text-green-300'
                       : 'bg-white/10 text-white/60'
                   }`}>
-                    {booster.rarity}
+                    {t(`rarity.${booster.rarity}`)}
                   </span>
                 </div>
                 <p className="text-white/50 text-sm mt-1">{booster.description}</p>
                 {booster.owned_quantity > 0 && (
                   <p className="text-green-400 text-xs mt-1">
-                    Owned: {booster.owned_quantity}
+                    {t("shop.owned", { n: booster.owned_quantity })}
                   </p>
                 )}
               </div>
@@ -124,12 +126,12 @@ export default function ShopScreen() {
                 className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm flex items-center gap-1.5 transition-colors"
               >
                 <Zap className="w-3.5 h-3.5" />
-                Buy
+                {t("shop.buy")}
               </button>
             </div>
 
             {!booster.usable_in_daily && (
-              <p className="text-white/20 text-xs mt-2">Not usable in Daily Challenges</p>
+              <p className="text-white/20 text-xs mt-2">{t("shop.notDaily")}</p>
             )}
           </motion.div>
         ))}

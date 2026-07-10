@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Trophy, Loader2 } from "lucide-react";
 import { challengeApi } from "../services/api.ts";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 export default function DailyChallengeScreen() {
+  const { t, lang } = useI18n();
   const [challenge, setChallenge] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,11 +21,11 @@ export default function DailyChallengeScreen() {
       const data = await challengeApi.getDaily();
       setChallenge(data);
     } catch (err) {
-      setError(err.message || "No challenge available");
+      setError(err.message || t("daily.errNone"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
@@ -38,7 +40,7 @@ export default function DailyChallengeScreen() {
     if (!challenge) return;
     const allDecided = challenge.products.every((p) => decisions[p.id]);
     if (!allDecided) {
-      setError("Decide on all products first");
+      setError(t("daily.errDecideAll"));
       return;
     }
 
@@ -55,7 +57,7 @@ export default function DailyChallengeScreen() {
       setResult(res);
       setSubmitted(true);
     } catch (err) {
-      setError(err.message || "Failed to submit");
+      setError(err.message || t("daily.errSubmit"));
     } finally {
       setSubmitting(false);
     }
@@ -78,7 +80,7 @@ export default function DailyChallengeScreen() {
           onClick={loadChallenge}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium"
         >
-          Retry
+          {t("common.retry")}
         </button>
       </div>
     );
@@ -91,16 +93,16 @@ export default function DailyChallengeScreen() {
       {/* Header */}
       <div className="text-center mb-2">
         <Calendar className="w-8 h-8 text-amber-400 mx-auto mb-1" />
-        <h2 className="text-2xl font-black text-white">Daily Challenge</h2>
+        <h2 className="text-2xl font-black text-white">{t("daily.title")}</h2>
         <p className="text-gray-400 text-sm">
-          {new Date(challenge.challenge_date).toLocaleDateString("en-US", {
+          {new Date(challenge.challenge_date).toLocaleDateString(lang === "es" ? "es-ES" : "en-US", {
             weekday: "long",
             month: "long",
             day: "numeric",
           })}
         </p>
         {challenge.completed && !submitted && (
-          <p className="text-green-400 text-sm mt-1">✓ You've completed this challenge</p>
+          <p className="text-green-400 text-sm mt-1">{t("daily.completed")}</p>
         )}
       </div>
 
@@ -114,14 +116,14 @@ export default function DailyChallengeScreen() {
         >
           <Trophy className="w-10 h-10 text-amber-400 mx-auto" />
           <div className="text-3xl font-black text-white">{result.correct_count}/{result.total_products}</div>
-          <p className="text-gray-400">Correct decisions</p>
+          <p className="text-gray-400">{t("daily.correctDecisions")}</p>
           <div className="flex justify-center gap-4 text-sm">
-            <span className="text-gray-400">Score: <strong className="text-amber-400">{result.score?.toLocaleString()}</strong></span>
+            <span className="text-gray-400">{t("daily.score")} <strong className="text-amber-400">{result.score?.toLocaleString()}</strong></span>
             {result.rank && result.total_players && (
-              <span className="text-gray-400">Rank: <strong className="text-white">#{result.rank} of {result.total_players}</strong></span>
+              <span className="text-gray-400">{t("daily.rank")} <strong className="text-white">{t("daily.rankOf", { rank: result.rank, total: result.total_players })}</strong></span>
             )}
           </div>
-          <p className="text-blue-400 text-sm">+{result.xp_earned} XP earned</p>
+          <p className="text-blue-400 text-sm">{t("daily.xpEarned", { xp: result.xp_earned })}</p>
         </motion.div>
       )}
 
@@ -153,7 +155,7 @@ export default function DailyChallengeScreen() {
                       : "bg-white/10 text-white/60 hover:bg-white/20"
                   }`}
                 >
-                  INVEST
+                  {t("daily.invest")}
                 </button>
                 <button
                   onClick={() => handleDecision(product.id, "pass")}
@@ -163,7 +165,7 @@ export default function DailyChallengeScreen() {
                       : "bg-white/10 text-white/60 hover:bg-white/20"
                   }`}
                 >
-                  PASS
+                  {t("daily.pass")}
                 </button>
               </div>
             </div>
@@ -183,7 +185,7 @@ export default function DailyChallengeScreen() {
           ) : (
             <>
               <Trophy className="w-5 h-5" />
-              Submit Decisions
+              {t("daily.submit")}
             </>
           )}
         </button>

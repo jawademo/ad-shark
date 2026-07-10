@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Loader2 } from "lucide-react";
 import { leaderboardApi } from "../services/api.ts";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 export default function LeaderboardScreen() {
+  const { t } = useI18n();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [type, setType] = useState("all_time");
@@ -30,15 +32,15 @@ export default function LeaderboardScreen() {
       {/* Header */}
       <div className="text-center mb-2">
         <Trophy className="w-8 h-8 text-amber-400 mx-auto mb-1" />
-        <h2 className="text-2xl font-black text-white">Leaderboard</h2>
-        <p className="text-gray-400 text-sm">Top sharks worldwide</p>
+        <h2 className="text-2xl font-black text-white">{t("lb.title")}</h2>
+        <p className="text-gray-400 text-sm">{t("lb.subtitle")}</p>
       </div>
 
       {/* Tabs */}
       <div className="flex bg-white/5 rounded-xl p-1">
         {[
-          { key: "all_time", label: "All Time" },
-          { key: "weekly", label: "Weekly" },
+          { key: "all_time", label: t("lb.allTime") },
+          { key: "weekly", label: t("lb.weekly") },
         ].map(({ key, label }) => (
           <button
             key={key}
@@ -64,7 +66,7 @@ export default function LeaderboardScreen() {
       {/* Empty */}
       {!loading && entries.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No entries yet. Be the first!</p>
+          <p className="text-gray-500">{t("lb.empty")}</p>
         </div>
       )}
 

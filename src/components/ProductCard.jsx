@@ -1,11 +1,14 @@
 import { motion } from "framer-motion";
+import { useI18n } from "../i18n/LanguageContext.jsx";
 
 export default function ProductCard({ product }) {
+  const { t } = useI18n();
+
   if (!product) {
     return (
       <div className="rounded-2xl border border-white/10 p-6 space-y-4 text-center"
         style={{ background: '#12121f' }}>
-        <p className="text-gray-500">Loading product...</p>
+        <p className="text-gray-500">{t("product.loading")}</p>
       </div>
     );
   }
@@ -58,7 +61,7 @@ export default function ProductCard({ product }) {
             ? 'border-green-400 text-green-400 bg-green-400/10'
             : 'border-white/20 text-white/60 bg-white/5'
         }`}>
-          {product.rarity}
+          {t(`rarity.${product.rarity}`)}
         </span>
       </div>
 
@@ -68,7 +71,7 @@ export default function ProductCard({ product }) {
       {/* Market Signals */}
       {product.market_signals?.length > 0 && (
         <div className="space-y-1.5">
-          <span className="text-xs font-semibold text-white/40 uppercase tracking-wide">Market Signals</span>
+          <span className="text-xs font-semibold text-white/40 uppercase tracking-wide">{t("product.marketSignals")}</span>
           <div className="flex flex-wrap gap-1.5">
             {product.market_signals.map((signal, i) => (
               <span
@@ -89,7 +92,7 @@ export default function ProductCard({ product }) {
           {product.categoryLabel || product.category}
         </span>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-white/40">Difficulty:</span>
+          <span className="text-xs text-white/40">{t("product.difficulty")}</span>
           <div className="flex gap-1">{difficultyDots}</div>
         </div>
       </div>

@@ -96,17 +96,36 @@ function generateRandomProduct() {
 // ── Session simulation (local, no server) ─────────────────────
 
 function createLocalSession(mode = "classic") {
-  const memes = getAbsurdProducts(getLang());
+  // Shuffle the meme pool so we can draw WITHOUT replacement — no product
+  // should ever appear twice in the same 5-round session.
+  const shuffledMemes = [...getAbsurdProducts(getLang())].sort(() => Math.random() - 0.5);
   const products = [];
-  for (let i = 0; i < 5; i++) {
-    // 80% chance to use a meme product, 20% random
-    if (Math.random() < 0.8 && memes.length > 0) {
-      const meme = memes[Math.floor(Math.random() * memes.length)];
-      products.push({ ...meme, id: `${meme.id}-${i}-${Date.now()}` });
+  const usedKeys = new Set(); // dedupe by base meme id / product name
+  let memeIdx = 0;
+  let guard = 0;
+
+  while (products.length < 5 && guard++ < 100) {
+    let product;
+    // ~80% meme / 20% random, but only draw a meme we haven't used yet.
+    if (Math.random() < 0.8 && memeIdx < shuffledMemes.length) {
+      const meme = shuffledMemes[memeIdx++];
+      product = { ...meme, id: `${meme.id}-${products.length}-${Date.now()}` };
     } else {
-      products.push(generateRandomProduct());
+      product = generateRandomProduct();
     }
+    if (usedKeys.has(product.name)) continue; // skip duplicates
+    usedKeys.add(product.name);
+    products.push(product);
   }
+
+  // Safety net: if the pool ran dry, top up with unique generated products.
+  while (products.length < 5) {
+    const product = generateRandomProduct();
+    if (usedKeys.has(product.name)) continue;
+    usedKeys.add(product.name);
+    products.push(product);
+  }
+
   return {
     id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     mode,
